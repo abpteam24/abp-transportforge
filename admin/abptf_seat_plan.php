@@ -176,12 +176,14 @@
 			'seat_count'        => $seat_count,
 			'groups_json'       => $groups,
 			'seat_labels_json'  => $labels,
-			'group_config_json' => $group_cfg,
-			'plan_bg_image'     => $bg ?: null,
-			'grid_json'         => wp_json_encode( $grid ),
+			'group_config_json'  => $group_cfg,
+			'cell_width_default' => absint( $_POST['cell_width_default']  ?? 44 ),
+			'cell_height_default'=> absint( $_POST['cell_height_default'] ?? 44 ),
+			'plan_bg_image'      => $bg ?: null,
+			'grid_json'          => wp_json_encode( $grid ),
 			'updated_at'        => current_time( 'mysql' ),
 		];
-		$fmt = [ '%s','%d','%d','%d','%s','%s','%s','%s','%s','%s' ];
+		$fmt = [ '%s','%d','%d','%d','%s','%s','%s','%d','%d','%s','%s','%s' ];
 
 		if ( $plan_db_id > 0 ) {
 			$r = $wpdb->update( $t, $data, [ 'id' => $plan_db_id ], $fmt, [ '%d' ] ); // phpcs:ignore
@@ -296,3 +298,4 @@
 		$plan['id'] = (int) $plan['id'];
 		return $plan;
 	}
+

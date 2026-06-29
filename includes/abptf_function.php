@@ -138,7 +138,7 @@
 
 			public static function build_url( $value = '', $extra_args = [] ): string {
 				$default_args = [
-					'page'         => 'transport-forge',
+					'page'         =>ABPTF_Function::slug(),
 					'tab'          => $value,
 					'_abptf_nonce' => wp_create_nonce( 'abptf_url_action' ),
 				];

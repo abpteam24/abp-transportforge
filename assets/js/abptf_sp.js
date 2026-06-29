@@ -324,6 +324,12 @@
             '<div class="prop-row" style="align-items:center"><span class="prop-label">' + esc(S.width_cells) + '</span>',
             '<input class="prop-input" id="p-size" type="number" value="1" min="1" max="4" style="width:46px;flex:none" oninput="abptfUpdateProp(\'size\',parseInt(this.value)||1)">',
             '<span style="font-size:10px;color:var(--text3);margin-left:3px">' + esc(S.cells) + '</span></div>',
+            '<div class="prop-row" style="align-items:center">',
+            '<span class="prop-label">W px</span>',
+            '<input class="prop-input" id="p-cellW" type="number" value="0" min="0" max="400" style="width:50px;flex:none" oninput="abptfUpdateProp(\'cellW\',parseInt(this.value)||0)" title="0=auto">',
+            '<span style="font-size:10px;color:var(--text3);margin:0 4px">H px</span>',
+            '<input class="prop-input" id="p-cellH" type="number" value="0" min="0" max="400" style="width:50px;flex:none" oninput="abptfUpdateProp(\'cellH\',parseInt(this.value)||0)" title="0=auto">',
+            '</div>',
             '<div style="margin-bottom:7px"><div class="cfg-label">' + esc(S.rotate) + '</div>',
             '<div class="rot-btns" id="rot-btns">',
             '<button class="rot-btn active" onclick="abptfUpdateProp(\'rotate\',0)">0°</button>',
@@ -404,8 +410,15 @@
         if (configMode) {
             var toolLabel = (TOOLS.find(function(t){ return t.type === activeTool; }) || {}).label || activeTool;
             var grpObj    = getGroupObj(activeGroup);
-            ind.style.display = '';
-            ind.textContent   = '⚡ Apply mode: ' + toolLabel + (activeGroup ? ' + ' + grpObj.label : '') + ' — click cells to apply';
+            if (activeTool === 'blank') {
+                ind.style.display = '';
+                ind.textContent   = '◻ Blank mode — click any cell to make it blank';
+            } else {
+                ind.style.display = '';
+                ind.textContent   = '⚡ Apply mode: ' + toolLabel
+                    + (activeTool === 'seat' && activeGroup ? ' + ' + grpObj.label : '')
+                    + ' — click cells to apply';
+            }
         } else {
             ind.style.display = 'none';
         }
@@ -727,7 +740,7 @@
        ═══════════════════════════════════════════════════════════ */
     window.abptfSetTool = function(type) {
         activeTool = type;
-        configMode = (type !== 'blank');
+        configMode = true;   // blank also needs ON to apply to cells
         document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active-tool'); });
         var el = document.getElementById('tool-' + type);
         if (el) el.classList.add('active-tool');
@@ -766,7 +779,7 @@
        GRID
        ═══════════════════════════════════════════════════════════ */
     function mkCell(type) {
-        return { type: type || 'seat', label:'', size:1, rotate:0, group:'', custom:'', icon:'', faIcon:'', bgImage:'' };
+        return { type: type || 'seat', label:'', size:1, rotate:0, group:'', custom:'', icon:'', faIcon:'', bgImage:'', cellW:0, cellH:0 };
     }
 
     function initGrid(rows, cols) {
@@ -932,7 +945,10 @@
                 var key     = r + '-' + c;
                 var isSel   = multiSel.has(key) || (selCell && selCell[0] === r && selCell[1] === c);
                 var isDR    = isDragSel && inDragRange(r, c);
-                var w       = (44 * (cell.size || 1)) + (5 * ((cell.size || 1) - 1));
+                var defaultW = (44 * (cell.size || 1)) + (5 * ((cell.size || 1) - 1));
+                var w        = (cell.cellW && cell.cellW > 0) ? cell.cellW : defaultW;
+                var h        = (cell.cellH && cell.cellH > 0) ? cell.cellH : 44;
+                var hStyle   = h !== 44 ? 'height:' + h + 'px;' : '';
                 var rot     = cell.rotate ? 'transform:rotate(' + cell.rotate + 'deg)' : '';
                 var grp     = getGroupObj(cell.group);
                 var cfg     = groupConfig[cell.group] || {};
@@ -976,7 +992,7 @@
                 }
 
                 html += '<div class="cell cell-' + cell.type + grpCls + selCls + '"'
-                    + ' style="width:' + w + 'px;' + rot + '"'
+                    + ' style="width:' + w + 'px;' + hStyle + rot + '"'
                     + ' data-r="' + r + '" data-c="' + c + '"'
                     + ' onclick="abptfCellClick(event,' + r + ',' + c + ')"'
                     + ' ondragover="abptfCellDragOver(event,' + r + ',' + c + ')"'
@@ -1041,7 +1057,7 @@
 
         if (isBlankType) {
             // Blank: wipe the cell cleanly, keep only size
-            gridData[r][c] = { type:'blank', label:'', size:old.size||1, rotate:0, group:'', custom:'', icon:'', faIcon:'', bgImage:'' };
+            gridData[r][c] = { type:'blank', label:'', size:old.size||1, rotate:0, group:'', custom:'', icon:'', faIcon:'', bgImage:'', cellW:old.cellW||0, cellH:old.cellH||0 };
             return;
         }
 
@@ -1055,6 +1071,8 @@
             icon:    isSeatType ? '' : (sameType ? (old.icon    || '') : ''),
             faIcon:  isSeatType ? '' : (sameType ? (old.faIcon  || '') : ''),
             bgImage: isSeatType ? '' : (sameType ? (old.bgImage || '') : ''),
+            cellW:   old.cellW || 0,
+            cellH:   old.cellH || 0,
         };
     }
 
@@ -1111,6 +1129,8 @@
         if (cell && !isBlank) {
             setVal('p-custom', cell.custom || '');
             setVal('p-size',   cell.size   || 1);
+            setVal('p-cellW',  cell.cellW  || 0);
+            setVal('p-cellH',  cell.cellH  || 0);
             document.querySelectorAll('#rot-btns .rot-btn').forEach(function(b, i) {
                 b.classList.toggle('active', [0,90,180,270][i] === (cell.rotate || 0));
             });
@@ -1319,8 +1339,10 @@
             return row.map(function(cell) {
                 if (!cell) return null;
                 if (cell.type === 'seat')
-                    return { type:cell.type, label:cell.label, size:cell.size, rotate:cell.rotate, group:cell.group, custom:cell.custom };
-                return { type:cell.type, custom:cell.custom, size:cell.size, rotate:cell.rotate, icon:cell.icon||'', faIcon:cell.faIcon||'', bgImage:cell.bgImage||'' };
+                    return { type:cell.type, label:cell.label, size:cell.size, rotate:cell.rotate, group:cell.group, custom:cell.custom, cellW:cell.cellW||0, cellH:cell.cellH||0 };
+                if (cell.type === 'blank')
+                    return { type:'blank', size:cell.size||1, cellW:cell.cellW||0, cellH:cell.cellH||0 };
+                return { type:cell.type, custom:cell.custom, size:cell.size, rotate:cell.rotate, icon:cell.icon||'', faIcon:cell.faIcon||'', bgImage:cell.bgImage||'', cellW:cell.cellW||0, cellH:cell.cellH||0 };
             });
         });
 
@@ -1466,6 +1488,8 @@
                 if (!cell) return;
                 if (!('faIcon'  in cell)) cell.faIcon  = '';
                 if (!('bgImage' in cell)) cell.bgImage = '';
+                if (!('cellW'   in cell)) cell.cellW   = 0;
+                if (!('cellH'   in cell)) cell.cellH   = 0;
             });
         });
         buildActiveGroupBtns(); refreshGroupConfigPanel();

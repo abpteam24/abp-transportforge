@@ -62,12 +62,12 @@
 					],
 				] );
 				wp_enqueue_style( 'abptf_admin', ABPTF_URL . 'assets/css/abptf_admin.css', array(), time() );
-				//wp_enqueue_script( 'abptf_sp', ABPTF_URL . 'assets/js/abptf_sp.js', array( 'jquery' ), time(), true );
-//				wp_localize_script( 'abptf_sp', 'abptf_config', [
-//					'ajax_url' => admin_url( 'admin-ajax.php' ),
-//					'nonce'    => wp_create_nonce( 'abptf_nonce' ),
-//					'strings'  => abptf_sp_strings(),
-//				] );
+				wp_enqueue_script( 'abptf_sp', ABPTF_URL . 'assets/js/abptf_sp.js', array( 'jquery' ), time(), true );
+				wp_localize_script( 'abptf_sp', 'abptf_config', [
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'abptf_nonce' ),
+					'strings'  => abptf_sp_strings(),
+				] );
 				//=============================//
 				do_action( 'abptf_admin_enqueue' );
 			}
@@ -206,7 +206,7 @@
 					require_once ABPTF_DIR . 'admin/abptf_dates.php';
 					require_once ABPTF_DIR . 'admin/abptf_additional.php';
 					require_once ABPTF_DIR . 'admin/abptf_form.php';
-					//require_once ABPTF_DIR . 'admin/abptf_seat_plan.php';
+					require_once ABPTF_DIR . 'admin/abptf_seat_plan.php';
 					require_once ABPTF_DIR . 'admin/abptf_resource.php';
 					require_once ABPTF_DIR . 'admin/abptf_configuration.php';
 					require_once ABPTF_DIR . 'admin/abptf_status.php';
@@ -400,6 +400,8 @@
 				        plan_name varchar(100) DEFAULT NULL,
 				        rows  mediumint(4)  NOT NULL DEFAULT 0,
        					 cols  mediumint(4)  NOT NULL DEFAULT 0,
+       					 cell_width_default  SMALLINT(4)  NOT NULL DEFAULT 44,
+       					 cell_height_default SMALLINT(4)  NOT NULL DEFAULT 44,
        					 seat_count mediumint(4)  NOT NULL DEFAULT 0,
 				        groups_json    TEXT                  DEFAULT NULL,
 				        seat_labels_json  TEXT                  DEFAULT NULL,
@@ -444,7 +446,7 @@
 					$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'status';
 					$page       = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 				}
-				if ( $page === 'transport-forge' && ABPTF_WC < 2 && $active_tab != 'status' ) {
+				if ( $page === ABPTF_Function::slug() && ABPTF_WC < 2 && $active_tab != 'status' ) {
 					wp_safe_redirect( ABPTF_Function::build_url( 'status' ) );
 					exit;
 				}
