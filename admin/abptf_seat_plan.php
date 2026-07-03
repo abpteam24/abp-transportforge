@@ -31,12 +31,12 @@
                     <div class="seat_plan_configuration setting_item">
                         <div class="_fj_between">
                             <h5 class="_abp">💺 <?php esc_html_e( 'Seat Plan', 'abp-transportforge' ); ?></h5>
-                            <button class="_btn_active_xxs" onclick="abptfNewPlan()">
-	                            <?php esc_html_e( 'Add New Seat Plan', 'abp-transportforge' ); ?>
+                            <button class="_btn_active_xxs" onclick="abptf_sp_create()">
+								<?php esc_html_e( 'Add New Seat Plan', 'abp-transportforge' ); ?>
                             </button>
                         </div>
                         <div class="_divider_xs"></div>
-                        <div id="view-builder" style="display:none"></div>
+                        <div id="abptf_sp_builder"><?php abptf_ajax_get_builder_html(); ?></div>
                     </div>
 					<?php
 				}
@@ -232,96 +232,108 @@
 	/*══ 3. STRINGS (fully translatable) ════════════════════ */
 	function abptf_sp_strings() {
 		return [
-			'plans'            => __( 'Seat Plans', 'abptf' ),
-			'builder'          => __( 'Builder', 'abptf' ),
-			'new_plan'         => __( 'New Plan', 'abptf' ),
-			'back'             => __( 'Back to Plans', 'abptf' ),
-			'save'             => __( 'Save Plan', 'abptf' ),
-			'clear'            => __( 'Clear', 'abptf' ),
-			'plan_bg'          => __( 'Plan BG', 'abptf' ),
-			'rm_bg'            => __( 'Remove BG', 'abptf' ),
-			'add_row'          => __( '+ Row', 'abptf' ),
-			'add_col'          => __( '+ Col', 'abptf' ),
-			'rem_row'          => __( '− Row', 'abptf' ),
-			'rem_col'          => __( '− Col', 'abptf' ),
-			'total_seats'      => __( 'Total Seats', 'abptf' ),
-			'status_note'      => __( 'Status → frontend only', 'abptf' ),
-			'rows_x_cols'      => __( 'Grid', 'abptf' ),
-			'cell_type'        => __( 'Cell Type', 'abptf' ),
-			'grid_size'        => __( 'Grid Size', 'abptf' ),
-			'rows'             => __( 'Rows', 'abptf' ),
-			'cols'             => __( 'Cols', 'abptf' ),
-			'selected_cell'    => __( 'Selected Cell', 'abptf' ),
-			'click_cell'       => __( 'Click a cell to edit', 'abptf' ),
-			'label'            => __( 'Label', 'abptf' ),
-			'custom_text'      => __( 'Custom', 'abptf' ),
-			'width_cells'      => __( 'Width', 'abptf' ),
-			'cells'            => __( 'cells', 'abptf' ),
-			'rotate'           => __( 'Rotate', 'abptf' ),
-			'delete_cell'      => __( 'Delete Cell', 'abptf' ),
-			'active_group'     => __( 'Active Group', 'abptf' ),
-			'group_config'     => __( 'Group Config', 'abptf' ),
-			'group_icon'       => __( 'Group Icon', 'abptf' ),
-			'group_fa'         => __( 'Font Awesome', 'abptf' ),
-			'group_image'      => __( 'Group BG Image', 'abptf' ),
-			'no_group'         => __( 'No Group', 'abptf' ),
-			'vip'              => __( 'VIP', 'abptf' ),
-			'normal'           => __( 'Normal', 'abptf' ),
-			'special'          => __( 'Special', 'abptf' ),
-			'adult'            => __( 'Adult', 'abptf' ),
-			'female'           => __( 'Female', 'abptf' ),
-			'couple'           => __( 'Couple', 'abptf' ),
-			'business'         => __( 'Business', 'abptf' ),
-			'economy'          => __( 'Economy', 'abptf' ),
-			'cell_icon'        => __( 'Cell Icon', 'abptf' ),
-			'emoji_icon'       => __( 'Emoji', 'abptf' ),
-			'fa_icon'          => __( 'Font Awesome', 'abptf' ),
-			'fa_placeholder'   => __( 'fa-solid fa-star', 'abptf' ),
-			'current_icon'     => __( 'Current:', 'abptf' ),
-			'remove_icon'      => __( 'Remove', 'abptf' ),
-			'upload'           => __( 'Upload', 'abptf' ),
-			'remove_bg'        => __( 'Remove BG', 'abptf' ),
-			'auto_number'      => __( 'Auto Number', 'abptf' ),
-			'prefix'           => __( 'Prefix', 'abptf' ),
-			'apply'            => __( 'Apply', 'abptf' ),
-			'apply_to_group'   => __( 'Applies to active group only', 'abptf' ),
-			'groups_in_plan'   => __( 'Groups in Plan', 'abptf' ),
-			'no_groups'        => __( 'No groups yet', 'abptf' ),
-			'available'        => __( 'Available', 'abptf' ),
-			'blocked'          => __( 'Blocked', 'abptf' ),
-			'sold'             => __( 'Sold', 'abptf' ),
-			'reserved'         => __( 'Reserved', 'abptf' ),
-			'delete_confirm'   => __( 'Delete this plan?', 'abptf' ),
-			'clear_confirm'    => __( 'Clear entire grid?', 'abptf' ),
-			'name_required'    => __( 'Plan name is required', 'abptf' ),
-			'dup_label'        => __( 'Duplicate seat label!', 'abptf' ),
-			'saved_ok'         => __( 'Plan saved ✓', 'abptf' ),
-			'saved_local'      => __( 'Saved locally ✓', 'abptf' ),
-			'deleted'          => __( 'Plan deleted', 'abptf' ),
-			'numbers_ok'       => __( 'Numbers applied ✓', 'abptf' ),
-			'no_plans'         => __( 'No seat plans yet', 'abptf' ),
-			'no_plans_sub'     => __( 'Create your first seat plan.', 'abptf' ),
-			'create_first'     => __( 'Create Plan', 'abptf' ),
-			'edit'             => __( 'Edit', 'abptf' ),
-			'delete'           => __( 'Delete', 'abptf' ),
-			'seats_label'      => __( 'seats', 'abptf' ),
-			'click_to_restore' => __( 'Click active tool to restore', 'abptf' ),
-			'multisel_drag'    => __( '🖱 Drag → range select', 'abptf' ),
-			'multisel_ctrl'    => __( 'Ctrl+Click → toggle', 'abptf' ),
-			'multisel_shift'   => __( 'Shift+Click → range from last', 'abptf' ),
-			'multisel_apply'   => __( 'Apply to Selection', 'abptf' ),
-			'multisel_clear'   => __( 'Clear Selection', 'abptf' ),
-			'tool_seat'        => __( 'Seat', 'abptf' ),
-			'tool_driver'      => __( 'Driver', 'abptf' ),
-			'tool_door'        => __( 'Door', 'abptf' ),
-			'tool_toilet'      => __( 'Toilet', 'abptf' ),
-			'tool_window'      => __( 'Window', 'abptf' ),
-			'tool_food'        => __( 'Food', 'abptf' ),
-			'tool_luggage'     => __( 'Luggage', 'abptf' ),
-			'tool_stairs'      => __( 'Stairs', 'abptf' ),
-			'tool_aisle'       => __( 'Aisle', 'abptf' ),
-			'tool_exit'        => __( 'Exit', 'abptf' ),
-			'tool_blank'       => __( 'Blank', 'abptf' ),
+			'plans'                => __( 'Seat Plans', 'abptf' ),
+			'builder'              => __( 'Builder', 'abptf' ),
+			'new_plan'             => __( 'New Plan', 'abptf' ),
+			'back'                 => __( 'Back to Plans', 'abptf' ),
+			'save'                 => __( 'Save Plan', 'abptf' ),
+			'clear'                => __( 'Clear', 'abptf' ),
+			'plan_bg'              => __( 'Plan BG', 'abptf' ),
+			'rm_bg'                => __( 'Remove BG', 'abptf' ),
+			'add_row'              => __( '+ Row', 'abptf' ),
+			'add_col'              => __( '+ Col', 'abptf' ),
+			'rem_row'              => __( '− Row', 'abptf' ),
+			'rem_col'              => __( '− Col', 'abptf' ),
+			'total_seats'          => __( 'Total Seats', 'abptf' ),
+			'status_note'          => __( 'Status → frontend only', 'abptf' ),
+			'rows_x_cols'          => __( 'Grid', 'abptf' ),
+			'cell_type'            => __( 'Cell Type', 'abptf' ),
+			'grid_size'            => __( 'Grid Size', 'abptf' ),
+			'rows'                 => __( 'Rows', 'abptf' ),
+			'cols'                 => __( 'Cols', 'abptf' ),
+			'selected_cell'        => __( 'Selected Cell', 'abptf' ),
+			'click_cell'           => __( 'Click a cell to edit', 'abptf' ),
+			'label'                => __( 'Label', 'abptf' ),
+			'custom_text'          => __( 'Custom', 'abptf' ),
+			'width_cells'          => __( 'Width', 'abptf' ),
+			'cells'                => __( 'cells', 'abptf' ),
+			'rotate'               => __( 'Rotate', 'abptf' ),
+			'delete_cell'          => __( 'Delete Cell', 'abptf' ),
+			'active_group'         => __( 'Active Group', 'abptf' ),
+			'group_config'         => __( 'Group Config', 'abptf' ),
+			'group_icon'           => __( 'Group Icon', 'abptf' ),
+			'group_fa'             => __( 'Font Awesome', 'abptf' ),
+			'group_image'          => __( 'Group BG Image', 'abptf' ),
+			'no_group'             => __( 'No Group', 'abptf' ),
+			'vip'                  => __( 'VIP', 'abptf' ),
+			'normal'               => __( 'Normal', 'abptf' ),
+			'special'              => __( 'Special', 'abptf' ),
+			'adult'                => __( 'Adult', 'abptf' ),
+			'female'               => __( 'Female', 'abptf' ),
+			'couple'               => __( 'Couple', 'abptf' ),
+			'business'             => __( 'Business', 'abptf' ),
+			'economy'              => __( 'Economy', 'abptf' ),
+			'cell_icon'            => __( 'Cell Icon', 'abptf' ),
+			'emoji_icon'           => __( 'Emoji', 'abptf' ),
+			'fa_icon'              => __( 'Font Awesome', 'abptf' ),
+			'fa_placeholder'       => __( 'fa-solid fa-star', 'abptf' ),
+			'current_icon'         => __( 'Current:', 'abptf' ),
+			'remove_icon'          => __( 'Remove', 'abptf' ),
+			'upload'               => __( 'Upload', 'abptf' ),
+			'remove_bg'            => __( 'Remove BG', 'abptf' ),
+			'auto_number'          => __( 'Auto Number', 'abptf' ),
+			'prefix'               => __( 'Prefix', 'abptf' ),
+			'apply'                => __( 'Apply', 'abptf' ),
+			'apply_to_group'       => __( 'Applies to active group only', 'abptf' ),
+			'groups_in_plan'       => __( 'Groups in Plan', 'abptf' ),
+			'no_groups'            => __( 'No groups yet', 'abptf' ),
+			'available'            => __( 'Available', 'abptf' ),
+			'blocked'              => __( 'Blocked', 'abptf' ),
+			'sold'                 => __( 'Sold', 'abptf' ),
+			'reserved'             => __( 'Reserved', 'abptf' ),
+			'delete_confirm'       => __( 'Delete this plan?', 'abptf' ),
+			'clear_confirm'        => __( 'Clear entire grid?', 'abptf' ),
+			'name_required'        => __( 'Plan name is required', 'abptf' ),
+			'dup_label'            => __( 'Duplicate seat label!', 'abptf' ),
+			'saved_ok'             => __( 'Plan saved ✓', 'abptf' ),
+			'saved_local'          => __( 'Saved locally ✓', 'abptf' ),
+			'deleted'              => __( 'Plan deleted', 'abptf' ),
+			'numbers_ok'           => __( 'Numbers applied ✓', 'abptf' ),
+			'no_plans'             => __( 'No seat plans yet', 'abptf' ),
+			'no_plans_sub'         => __( 'Create your first seat plan.', 'abptf' ),
+			'create_first'         => __( 'Create Plan', 'abptf' ),
+			'edit'                 => __( 'Edit', 'abptf' ),
+			'delete'               => __( 'Delete', 'abptf' ),
+			'seats_label'          => __( 'seats', 'abptf' ),
+			'click_to_restore'     => __( 'Click active tool to restore', 'abptf' ),
+			'multisel_drag'        => __( '🖱 Drag → range select', 'abptf' ),
+			'multisel_ctrl'        => __( 'Ctrl+Click → toggle', 'abptf' ),
+			'multisel_shift'       => __( 'Shift+Click → range from last', 'abptf' ),
+			'multisel_apply'       => __( 'Apply to Selection', 'abptf' ),
+			'multisel_clear'       => __( 'Clear Selection', 'abptf' ),
+			'tool_seat'            => __( 'Seat', 'abptf' ),
+			'tool_driver'          => __( 'Driver', 'abptf' ),
+			'tool_door'            => __( 'Door', 'abptf' ),
+			'tool_toilet'          => __( 'Toilet', 'abptf' ),
+			'tool_window'          => __( 'Window', 'abptf' ),
+			'tool_food'            => __( 'Food', 'abptf' ),
+			'tool_luggage'         => __( 'Luggage', 'abptf' ),
+			'tool_stairs'          => __( 'Stairs', 'abptf' ),
+			'tool_aisle'           => __( 'Aisle', 'abptf' ),
+			'tool_exit'            => __( 'Exit', 'abptf' ),
+			'tool_blank'           => __( 'Blank', 'abptf' ),
+			'builder_html_loading' => __( 'Loading builder…', 'abp-transportforge' ),
+			'builder_html_error'   => __( 'Failed to load builder HTML.', 'abptf-transportforge' ),
+			'save_in_progress'     => __( 'Saving…', 'abptf-transportforge' ),
+			'save_success'         => __( 'Saved successfully', 'abptf-transportforge' ),
+			'save_error'           => __( 'Save failed', 'abptf-transportforge' ),
+			'load_plans_error'     => __( 'Failed to load plans', 'abptf-transportforge' ),
+			'edit_plan'            => __( 'Edit Plan', 'abptf-transportforge' ),
+			'delete_plan'          => __( 'Delete Plan', 'abptf-transportforge' ),
+			'cancel'               => __( 'Cancel', 'abptf-transportforge' ),
+			'confirm'              => __( 'Confirm', 'abptf-transportforge' ),
+			'upload_image'         => __( 'Upload Image', 'abptf-transportforge' ),
+			'remove_image'         => __( 'Remove Image', 'abptf-transportforge' ),
 		];
 	}
 	/* ══ 4. AUTH ═════════════════════════════════════════════ */
@@ -353,6 +365,80 @@
 	/* ══ 5. SAVE ═════════════════════════════════════════════ */
 	add_action( 'wp_ajax_abptf_save_sp', 'abptf_ajax_save_sp' );
 	add_action( 'wp_ajax_nopriv_abptf_save_sp', 'abptf_ajax_save_sp' );
+	/* AJAX: return builder HTML for admin UI */
+	add_action( 'wp_ajax_abptf_get_builder_html', 'abptf_ajax_get_builder_html' );
+	add_action( 'wp_ajax_nopriv_abptf_get_builder_html', 'abptf_ajax_get_builder_html' );
+	function abptf_ajax_get_builder_html() {
+		//abptf_sp_auth( false );
+		// Build the same HTML skeleton that JS expects. Keep it minimal — JS will attach behaviour.
+		//ob_start();
+		?>
+        <div class="sp_toolbar">
+            <label>
+                <input class="_form_control" id="abp_sp_name" type="text" placeholder="<?php esc_attr_e( 'Seat Plan Name...', 'abp-transportforge' ); ?>">
+            </label>
+            <div class="toolbar-sep"></div>
+            <div class="_group_content">
+                <div class= _ag_content" onclick="abptfSetRows(parseInt(abptf_sp_get_val('abptf_sp_rows'))-1)"> ➖</div>
+                <label>
+                    <input type="number" class="_form_control" id="abptf_sp_rows" value="5"  min="1" onchange="abptfSetRows(this.value)"  />
+                </label>
+                <div class= _ag_content" onclick="abptfSetRows(parseInt(abptf_sp_get_val('abptf_sp_rows'))+1)">➕</div>
+            </div>
+
+
+            <div class="toolbar-rc-group" style="display:flex;align-items:center;gap:4px;">
+                <span style="font-size:12px;color:var(--text3);margin-right:6px"><?php echo esc_html__( 'Cols', 'abp-transportforge' ); ?></span>
+                <button class="btn btn-sm btn-ghost" onclick="abptfSetCols(parseInt(getVal('rc-input-cols'))-1)">−</button>
+                <input class="prop-input" id="rc-input-cols" type="number" value="5" min="1" style="width:46px;text-align:center" onchange="abptfSetCols(this.value)">
+                <button class="btn btn-sm" onclick="abptfSetCols(parseInt(getVal('rc-input-cols'))+1)">+</button>
+            </div>
+            <div class="toolbar-sep"></div>
+            <label class="btn btn-sm" title="<?php echo esc_attr__( 'Plan BG', 'abp-transportforge' ); ?>">🖼 <?php echo esc_html__( 'Plan BG', 'abp-transportforge' ); ?>
+                <input type="file" accept="image/*" style="display:none" onchange="abptfSetPlanBG(event)">
+            </label>
+            <button class="btn btn-sm btn-ghost" id="btn-rm-bg" style="display:none" onclick="abptfRemovePlanBG()">✕ <?php echo esc_html__( 'Remove BG', 'abp-transportforge' ); ?></button>
+            <div class="sp_starts" id="sp_starts">
+                <button class="btn btn-xs btn-ghost stats-clear-btn" onclick="abptfClearGrid()">✕ <?php echo esc_html__( 'Clear', 'abp-transportforge' ); ?></button>
+                <div class="sp_starts-content" id="sp_starts-content"></div>
+            </div>
+            <div style="flex:1"></div>
+            <button type="button" class="btn btn-sm btn-primary" id="btn-save-plan">💾 <?php echo esc_html__( 'Save Plan', 'abp-transportforge' ); ?></button>
+        </div>
+        <div class="abptf-content">
+            <div class="abptf-sidebar">
+                <div class="multisel-hint"><?php echo esc_html__( '🖱 Drag → range select', 'abp-transportforge' ); ?><br><?php echo esc_html__( 'Ctrl+Click → toggle', 'abp-transportforge' ); ?><br><?php echo esc_html__( 'Shift+Click → range from last', 'abp-transportforge' ); ?></div>
+                <div class="sb-section">
+                    <div class="sb-title"><?php echo esc_html__( 'Cell Type', 'abp-transportforge' ); ?></div>
+                    <div id="tool_palette" class="_group_content_f_equal_w_full"></div>
+                </div>
+                <div class="sb-section" id="sb-group-section">
+                    <div class="sb-title"><?php echo esc_html__( 'Active Group', 'abp-transportforge' ); ?></div>
+                    <div id="active-group-btns" class="group-btns-grid"></div>
+                </div>
+                <div class="sb-section abptf-auto-number-panel" id="sb-autonumber-section" style="display:none">
+                    <div class="sb-title"><?php echo esc_html__( 'Auto Number', 'abp-transportforge' ); ?></div>
+                    <div class="auto-number-row">
+                        <input class="prop-input" id="auto-prefix" type="text" placeholder="<?php echo esc_attr__( 'Prefix', 'abp-transportforge' ); ?>" style="width:80px;flex:none">
+                        <input class="prop-input" id="auto-start" type="number" value="1" min="1" style="width:70px;flex:none">
+                        <button class="btn btn-sm" onclick="abptfAutoNumber()"><?php echo esc_html__( 'Apply', 'abp-transportforge' ); ?></button>
+                    </div>
+                </div>
+            </div>
+            <div class="abptf-main-area">
+                <div class="canvas-outer">
+                    <div class="canvas-wrap" id="canvas-wrap">
+                        <div id="canvas-bg-overlay" class="canvas-bg-overlay" style="display:none"></div>
+                        <div class="grid-inner" id="grid-inner"></div>
+                    </div>
+                </div>
+                <div class="abptf-legend" id="abptf-legend"></div>
+            </div>
+        </div>
+		<?php
+		//$html = ob_get_clean();
+		//wp_send_json_success( [ 'html' => $html ] );
+	}
 	function abptf_ajax_save_sp() {
 		abptf_sp_auth();
 		global $wpdb;

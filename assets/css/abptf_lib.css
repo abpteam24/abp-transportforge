@@ -993,13 +993,14 @@
 	div.abptf_area [class*="_bg_success"] { background-color: var(--tf_color_success); }
 	/**********************************************************************Navy Blue********/
 	div.abptf_area [class*="_btn_navy_blue"],
+	div.abptf_area [class*="_btn_light_navy_blue"].abp_active,
 	div.abptf_area [class*="_btn_light_navy_blue"]:hover {color: var(--tf_color_white); background-color: var(--tf_color_navy_blue);border-color: var(--tf_color_navy_blue); }
 	div.abptf_area [class*="_btn_navy_blue"].abp_active,
 	div.abptf_area [class*="_btn_navy_blue"]:hover,
 	div.abptf_area [class*="_btn_light_navy_blue"] { color: var(--tf_color_navy_blue);background-color: var(--tf_color_white);border-color: var(--tf_color_navy_blue);}
 	div.abptf_area [class*="_color_navy_blue"] { color: var(--tf_color_navy_blue); }
 	div.abptf_area [class*="_bg_navy_blue"] { background-color: var(--tf_color_navy_blue); }
-	/**********************************************************************yello********/
+	/**********************************************************************yellow********/
 	div.abptf_area [class*="_btn_yellow"],
 	div.abptf_area [class*="_btn_light_yellow"]:hover {color: var(--tf_color_white); background-color: var(--tf_color_yellow);border-color: var(--tf_color_yellow); }
 	div.abptf_area [class*="_btn_yellow"].abp_active,
