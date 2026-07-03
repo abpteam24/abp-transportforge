@@ -111,7 +111,7 @@
 
 			public static function organizer_value( $id ) { return ( ABPTF_Organizer[ $id ]['name'] ?? null ) ?: $id; }
 
-			public static function location_label() { return ( ABPTF_Configuration['location_label'] ?? null ) ?: __( 'Location', 'abp-transportforge' ); }
+			public static function location_label() { return ( ABPTF_Configuration['location_label'] ?? null ) ?: __( 'Stops', 'abp-transportforge' ); }
 
 			public static function location_slug() { return ( ABPTF_Configuration['location_slug'] ?? null ) ?: 'location'; }
 
@@ -1161,6 +1161,22 @@
 							if ( $post_id !== $_post_id ) {
 								$icon       = $active_icon ? ABPTF_Function::get_post_info( $post_id, 'post_icon' ) : '';
 								$all_info[] = [ 'id' => $post_id, 'icon' => $icon, 'label' => get_the_title( $post_id ) ];
+							}
+						}
+					}
+				}
+
+				return $all_info;
+			}
+			public static function location_info_js( $_post_id = '' ): array {
+				$all_info = [];
+				if ( ! empty( $_post_id ) && $_post_id > 0 ) {
+					$all_location   = ABPTF_Function::get_option( 'abptf_location' );;
+					if ( ! empty( $all_location ) ) {
+						foreach ( $all_location as $key => $location ) {
+							$name = $location['name'] ?? '';
+							if ( $name ) {
+								$all_info[] = [ 'id' => $key,  'label' => $name ];
 							}
 						}
 					}

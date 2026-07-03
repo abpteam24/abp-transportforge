@@ -20,7 +20,7 @@
        CONFIG
        ═══════════════════════════════════════════════════════════ */
     const CFG      = window.abptf_config || {};
-    const AJAX_URL = CFG.ajax_url || '/wp-admin/admin-ajax.php';
+    const AJAX_URL = CFG.ajax_url || window.ajaxurl || '/wp-admin/admin-ajax.php';
     const NONCE    = CFG.nonce    || '';
 
     const S = Object.assign({
@@ -38,7 +38,6 @@
         group_icon:'Group Icon (emoji)',
         group_fa:'Group FA Icon',
         group_image:'Group BG Image',
-        group_label_prefix:'Label Prefix',
         no_group:'No Group', vip:'VIP', normal:'Normal', special:'Special',
         adult:'Adult', female:'Female', couple:'Couple', business:'Business', economy:'Economy',
         cell_icon:'Cell Icon', emoji_icon:'Emoji', fa_icon:'Font Awesome',
@@ -60,15 +59,20 @@
         multisel_shift:'Shift+Click → range from last',
         multisel_apply:'Apply to Selection',
         multisel_clear:'Clear Selection',
+        tool_others:'Others',
     }, CFG.strings || {});
 
     /* ═══════════════════════════════════════════════════════════
        CONSTANTS
        ═══════════════════════════════════════════════════════════ */
 
-    // Cell type palette — emoji icons
+    // Top-level tools: Seat and Others
     const TOOLS = [
-        { type:'seat',    emoji:'💺', label:S.tool_seat    || 'Seat'    },
+        { type:'seat',   emoji:'💺', label:S.tool_seat   || 'Seat'   },
+        { type:'others', emoji:'◼', label:S.tool_others || 'Others' },
+    ];
+
+    const OTHER_TOOLS = [
         { type:'driver',  emoji:'🚗', label:S.tool_driver  || 'Driver'  },
         { type:'door',    emoji:'🚪', label:S.tool_door    || 'Door'    },
         { type:'toilet',  emoji:'🚽', label:S.tool_toilet  || 'Toilet'  },
@@ -81,18 +85,34 @@
         { type:'blank',   emoji:'◻',  label:S.tool_blank   || 'Blank'   },
     ];
 
-    // Fixed groups
-    const GROUPS = [
-        { key:'',         label:S.no_group,  color:'#8B949E', defaultIcon:'',   defaultPrefix:'S'  },
-        { key:'vip',      label:S.vip,       color:'#A78BFA', defaultIcon:'👑', defaultPrefix:'V'  },
-        { key:'normal',   label:S.normal,    color:'#1D9E75', defaultIcon:'💺', defaultPrefix:'N'  },
-        { key:'special',  label:S.special,   color:'#6366F1', defaultIcon:'⭐', defaultPrefix:'SP' },
-        { key:'adult',    label:S.adult,     color:'#EC4899', defaultIcon:'👤', defaultPrefix:'A'  },
-        { key:'female',   label:S.female,    color:'#F472B6', defaultIcon:'👩', defaultPrefix:'F'  },
-        { key:'couple',   label:S.couple,    color:'#C026D3', defaultIcon:'💑', defaultPrefix:'C'  },
-        { key:'business', label:S.business,  color:'#0EA5E9', defaultIcon:'💼', defaultPrefix:'B'  },
-        { key:'economy',  label:S.economy,   color:'#84CC16', defaultIcon:'🎫', defaultPrefix:'E'  },
-    ];
+    // Fixed groups are built dynamically from backend seat_type data.
+    function buildGroupList() {
+        var groups = [
+            { key:'', label:S.no_group, color:'#8B949E', defaultIcon:'', defaultPrefix:'S' }
+        ];
+        if (window.abptf_config && abptf_config.seat_type) {
+            var src = abptf_config.seat_type;
+            var parsed = [];
+            try {
+                parsed = typeof src === 'string' ? JSON.parse(src) : src;
+            } catch (e) {
+                parsed = [];
+            }
+            if (Array.isArray(parsed) && parsed.length) {
+                parsed.forEach(function(item, idx) {
+                    groups.push({
+                        key: item.id !== undefined ? String(item.id) : 'grp_' + idx,
+                        label: item.label || S.no_group,
+                        color: item.color || '#8B949E',
+                        defaultIcon: item.icon || '',
+                        defaultPrefix: item.prefix || '',
+                    });
+                });
+            }
+        }
+        return groups;
+    }
+    const GROUPS = buildGroupList();
 
     // Emoji options for non-seat cells and group icon picker
     const EMOJI_LIST = [
@@ -114,6 +134,18 @@
         return GROUPS.find(function(g) { return g.key === (key || ''); }) || GROUPS[0];
     }
 
+    function getGroupSeatCount(key) {
+        var count = 0;
+        gridData.forEach(function(row) {
+            row.forEach(function(cell) {
+                if (cell && cell.type === 'seat' && String(cell.group || '') === String(key || '')) {
+                    count++;
+                }
+            });
+        });
+        return count;
+    }
+
     /* ═══════════════════════════════════════════════════════════
        STATE
        ═══════════════════════════════════════════════════════════ */
@@ -124,6 +156,7 @@
     var multiSel      = new Set();    // "r-c" keys
     var activeTool    = 'seat';
     var activeGroup   = '';           // key of active group
+    var activeOther   = OTHER_TOOLS[0] ? OTHER_TOOLS[0].type : 'blank';
     var dragType      = null;
     var editingPlanId = null;
     var isDragSel     = false;
@@ -133,7 +166,7 @@
     // false = "inspect mode" — clicking cell only shows its config, doesn't change it
     var configMode    = false;
 
-    // Per-group config: icon, faIcon, bgImage, labelPrefix
+    // Per-group config: icon, faIcon, bgImage (label prefix removed — Auto Number prefix is the single source)
     // Initialised from GROUPS defaults, user can override per plan
     var groupConfig = {};
     function initGroupConfig() {
@@ -143,40 +176,148 @@
                 icon:        g.defaultIcon,
                 faIcon:      '',
                 bgImage:     '',
-                labelPrefix: g.defaultPrefix,
             };
         });
     }
     initGroupConfig();
+    /* ═══════════════════════════════════════════════════════════
+        PLAN LIST
+        ═══════════════════════════════════════════════════════════ */
+    function renderPlansList() {
+        var grid = document.getElementById('plans-grid');
+        if (!grid) return;
+        if (!plans.length) {
+            grid.innerHTML = '<div class="empty-state"><div class="empty-icon">💺</div>'
+                + '<div class="empty-title">' + esc(S.no_plans) + '</div>'
+                + '<div class="empty-sub">' + esc(S.no_plans_sub) + '</div>'
+                + '<button class="btn btn-primary" onclick="abptfNewPlan()">+ ' + esc(S.create_first) + '</button></div>';
+            return;
+        }
+        grid.innerHTML = plans.map(function(p) {
+            var groups = Array.isArray(p.groups_json) ? p.groups_json : [];
+            var gcfg   = p.group_config_json || {};
+            var groupBadges = groups.map(function(g) {
+                var gObj = getGroupObj(g);
+                var cfg2 = gcfg[g] || {};
+                var icon = cfg2.icon || gObj.defaultIcon || '●';
+                return '<span class="badge" style="background:' + gObj.color + '18;color:' + gObj.color + '">' + icon + ' ' + esc(gObj.label) + '</span>';
+            }).join('');
+            return '<div class="plan-card" onclick="abptfOpenEdit(' + p.id + ')">'
+                + '<div class="plan-card-hdr"><div>'
+                + '<div class="plan-card-name">' + esc(p.plan_name) + '</div>'
+                + '<div class="plan-card-id">ID: ' + p.id + '</div></div>'
+                + '<div class="plan-card-acts" onclick="event.stopPropagation()">'
+                + '<button class="btn btn-xs" onclick="abptfOpenEdit(' + p.id + ')">✏️</button>'
+                + '<button class="btn btn-xs btn-danger" onclick="abptfDeletePlan(' + p.id + ')">🗑</button>'
+                + '</div></div>'
+                + '<div class="plan-card-meta">'
+                + '<span class="badge badge-green">💺 ' + p.seat_count + ' ' + esc(S.seats_label) + '</span>'
+                + '<span class="badge badge-muted">' + p.rows + '×' + p.cols + '</span>'
+                + (p.plan_bg_image ? '<span class="badge badge-amber">🖼 BG</span>' : '')
+                + groupBadges + '</div>'
+                + '<div class="plan-mini">' + buildMini(p.grid_json, gcfg) + '</div>'
+                + '</div>';
+        }).join('');
+    }
 
+    function buildMini(gj, gcfg) {
+        var grid = typeof gj === 'string' ? tryParse(gj) : gj;
+        if (!grid || !grid.length) return '<span style="color:var(--text3);font-size:10px">—</span>';
+        var cm = {driver:'#5F5E5A',door:'#185FA5',toilet:'#534AB7',window:'#3B6D11',food:'#854F0B',luggage:'#712B13',stairs:'#993C1D',aisle:'#30363D',exit:'#A32D2D',blank:'transparent'};
+        var gc = {'':'#1D9E75',vip:'#A78BFA',normal:'#1D9E75',special:'#6366F1',adult:'#EC4899',female:'#F472B6',couple:'#C026D3',business:'#0EA5E9',economy:'#84CC16'};
+        return grid.slice(0,6).map(function(row) {
+            return '<div class="mini-row">' + (row||[]).slice(0,20).map(function(cell) {
+                if (!cell) return '<div class="mini-cell" style="background:transparent"></div>';
+                var bg = cell.type === 'seat' ? (gc[cell.group||'']||'#1D9E75') : (cm[cell.type]||'#30363D');
+                return '<div class="mini-cell" style="background:' + bg + '"></div>';
+            }).join('') + '</div>';
+        }).join('');
+    }
+
+    window.abptfNewPlan = function() {
+        editingPlanId = null; planBGImg = ''; selCell = null; activeGroup = '';
+        multiSel.clear(); isDragSel = false; dragSelStart = null; dragSelEnd = null;
+        initGroupConfig();
+        configMode = false;
+        setVal('plan-name', '');
+        ['btn-rm-bg','props-panel'].forEach(function(id) { var el=document.getElementById(id); if(el) el.style.display='none'; });
+        var emp = document.getElementById('props-empty'); if(emp) emp.style.display='';
+        refreshSidebarCounters();
+        refreshGroupConfigPanel();
+        updateConfigModeIndicator();
+        initGrid(5,5); window.abptfShowView('builder');
+    };
+
+    window.abptfOpenEdit = function(id) {
+        var p = null; plans.forEach(function(pl) { if (pl.id === id) p = pl; });
+        if (!p) return;
+        editingPlanId = id; planBGImg = p.plan_bg_image || ''; selCell = null; activeGroup = '';
+        multiSel.clear(); isDragSel = false; dragSelStart = null; dragSelEnd = null;
+        initGroupConfig();
+        configMode = false;
+        // Restore saved group config if present
+        if (p.group_config_json && typeof p.group_config_json === 'object') {
+            Object.keys(p.group_config_json).forEach(function(k) { groupConfig[k] = p.group_config_json[k]; });
+        }
+        setVal('plan-name', p.plan_name);
+        var rmBg = document.getElementById('btn-rm-bg'); if(rmBg) rmBg.style.display = planBGImg ? '' : 'none';
+        var emp  = document.getElementById('props-empty'); if(emp) emp.style.display = '';
+        var pan  = document.getElementById('props-panel'); if(pan) pan.style.display = 'none';
+        refreshSidebarCounters();
+        gridData = typeof p.grid_json === 'string' ? tryParse(p.grid_json) : JSON.parse(JSON.stringify(p.grid_json));
+        gridData.forEach(function(row) {
+            row && row.forEach(function(cell) {
+                if (!cell) return;
+                if (!('faIcon'  in cell)) cell.faIcon  = '';
+                if (!('bgImage' in cell)) cell.bgImage = '';
+                if (!('cellW'   in cell)) cell.cellW   = 0;
+                if (!('cellH'   in cell)) cell.cellH   = 0;
+            });
+        });
+        buildActiveGroupBtns(); refreshGroupConfigPanel();
+        updateRCCount(); renderGrid(); window.abptfShowView('builder');
+    };
+
+    window.abptfDeletePlan = function(id) {
+        if (!confirm(S.delete_confirm)) return;
+        fetch(AJAX_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({action:'abptf_delete_sp',nonce:NONCE,plan_db_id:id})})
+            .then(function(r){return r.json();}).finally(function(){
+            plans = plans.filter(function(p){return p.id!==id;});
+            localStorage.setItem('abptf_plans_v4', JSON.stringify(plans));
+            renderPlansList(); showToast(S.deleted);
+        });
+    };
     /* ═══════════════════════════════════════════════════════════
        INIT
        ═══════════════════════════════════════════════════════════ */
-    document.addEventListener('DOMContentLoaded', function () {
-        buildTopbar();
+    function initApp() {
         buildBuilderView();
         buildToast();
         initOutsideClick();
+        initActionDelegation();
         loadPlans();
-    });
+    }
 
-    /* ═══════════════════════════════════════════════════════════
-       TOPBAR
-       ═══════════════════════════════════════════════════════════ */
-    function buildTopbar() {
-        var tb = document.getElementById('abptf-topbar');
-        if (!tb) return;
-        tb.innerHTML =
-            '<div class="abptf-logo" onclick="abptfShowView(\'list\')">'
-            + '<div class="abptf-logo-dot">💺</div><span>ABP Seat Plan</span>'
-            + '</div>'
-            + '<div class="abptf-topbar-divider"></div>'
-            + '<span class="abptf-topbar-ctx" id="topbar-ctx">' + esc(S.plans) + '</span>'
-            + '<div class="abptf-topbar-spacer"></div>'
-            + '<button class="btn btn-sm" id="btn-back" style="display:none" onclick="abptfShowView(\'list\')">'
-            + '← ' + esc(S.back) + '</button>'
-            + '<button class="btn btn-sm btn-primary" id="btn-new-top" onclick="abptfNewPlan()">'
-            + '+ ' + esc(S.new_plan) + '</button>';
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+        initApp();
+    }
+
+    /* ── DELEGATED ACTION HANDLER ──────────────────────────────
+       Single document-level listener for all data-action buttons.
+       This guarantees tool/group selection always fires exactly once,
+       with no inline-onclick quote-escaping or bubbling races. ── */
+    function initActionDelegation() {
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest('[data-action]');
+            if (!el) return;
+            e.stopPropagation();
+            var action = el.dataset.action;
+            var value  = el.dataset.actionValue;
+            if (action === 'set-tool')         { window.abptfSetTool(value); }
+            else if (action === 'set-active-group') { window.abptfSetActiveGroup(value); }
+        }, true); // capture phase: runs BEFORE the outside-click listener, guaranteed
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -186,115 +327,75 @@
         var v = document.getElementById('view-builder');
         if (!v) return;
         v.innerHTML = [
-            /* toolbar */
             '<div class="abptf-toolbar">',
             '<input class="plan-name-input" id="plan-name" type="text" placeholder="' + esc(S.new_plan) + '…">',
             '<div class="toolbar-sep"></div>',
-            '<button class="btn btn-sm" onclick="abptfAddRow()">' + esc(S.add_row) + '</button>',
-            '<button class="btn btn-sm" onclick="abptfAddCol()">' + esc(S.add_col) + '</button>',
-            '<button class="btn btn-sm btn-ghost" onclick="abptfRemoveRow()">' + esc(S.rem_row) + '</button>',
-            '<button class="btn btn-sm btn-ghost" onclick="abptfRemoveCol()">' + esc(S.rem_col) + '</button>',
-            '<div class="toolbar-sep"></div>',
+            '<div class="toolbar-rc-group" style="display:flex;align-items:center;gap:4px;">'
+            + '<span style="font-size:12px;color:var(--text3);margin-right:6px">' + esc(S.rows) + '</span>'
+            + '<button class="btn btn-sm btn-ghost" onclick="abptfSetRows(parseInt(getVal(\'rc-input-rows\'))-1)">−</button>'
+            + '<input class="prop-input" id="rc-input-rows" type="number" value="5" min="1" style="width:46px;text-align:center" onchange="abptfSetRows(this.value)">'
+            + '<button class="btn btn-sm" onclick="abptfSetRows(parseInt(getVal(\'rc-input-rows\'))+1)">+</button>'
+            + '</div>'
+            + '<div class="toolbar-rc-group" style="display:flex;align-items:center;gap:4px;">'
+            + '<span style="font-size:12px;color:var(--text3);margin-right:6px">' + esc(S.cols) + '</span>'
+            + '<button class="btn btn-sm btn-ghost" onclick="abptfSetCols(parseInt(getVal(\'rc-input-cols\'))-1)">−</button>'
+            + '<input class="prop-input" id="rc-input-cols" type="number" value="5" min="1" style="width:46px;text-align:center" onchange="abptfSetCols(this.value)">'
+            + '<button class="btn btn-sm" onclick="abptfSetCols(parseInt(getVal(\'rc-input-cols\'))+1)">+</button>'
+            + '</div>'
+            + '<div class="toolbar-sep"></div>',
             '<label class="btn btn-sm" title="' + esc(S.plan_bg) + '">',
+
             '🖼 ' + esc(S.plan_bg),
             '<input type="file" accept="image/*" style="display:none" onchange="abptfSetPlanBG(event)">',
             '</label>',
             '<button class="btn btn-sm btn-ghost" id="btn-rm-bg" style="display:none" onclick="abptfRemovePlanBG()">✕ ' + esc(S.rm_bg) + '</button>',
-            '<div class="toolbar-sep"></div>',
-            '<button class="btn btn-sm btn-ghost" onclick="abptfClearGrid()">🗑 ' + esc(S.clear) + '</button>',
-            '<div style="flex:1"></div>',
-            '<button class="btn btn-sm btn-primary" onclick="abptfSavePlan()">💾 ' + esc(S.save) + '</button>',
+            '<div class="abptf-stats" id="abptf-stats">'
+            + '<button class="btn btn-xs btn-ghost stats-clear-btn" onclick="abptfClearGrid()">✕ ' + esc(S.clear) + '</button>'
+            + '<div class="abptf-stats-content" id="abptf-stats-content"></div>'
+            + '</div>'
+            + '<div style="flex:1"></div>',
+            '<button type="button" class="btn btn-sm btn-primary" id="btn-save-plan">💾 ' + esc(S.save) + '</button>',
             '</div>',
-            /* stats */
-            '<div class="abptf-stats" id="abptf-stats"></div>',
-            /* body */
             '<div class="abptf-content">',
-            /* sidebar */
-            '<aside class="abptf-sidebar">',
-
-            /* 1. Cell type */
-            '<div class="sb-section">',
-            '<div class="sb-title">' + esc(S.cell_type) + '</div>',
-            '<div class="tool-grid" id="tool-palette"></div>',
+            '<div class="abptf-sidebar">',
             '<div class="multisel-hint">',
             esc(S.multisel_drag) + '<br>',
             esc(S.multisel_ctrl) + '<br>',
             esc(S.multisel_shift),
             '</div>',
+            '<div class="sb-section">',
+            '<div class="sb-title">' + esc(S.cell_type) + '</div>',
+            '<div class="tool-grid" id="tool-palette"></div>',
             '</div>',
-
-            /* 2. Active group — ONE place only */
             '<div class="sb-section" id="sb-group-section">',
             '<div class="sb-title">' + esc(S.active_group) + '</div>',
             '<div class="group-hint">Seat tool + group selected → click cell applies both.</div>',
             '<div id="active-group-btns" class="group-btns-grid"></div>',
             '</div>',
-
-            /* 3. Group config — icon/image/prefix for active group */
-            '<div class="sb-section" id="sb-groupcfg-section">',
-            '<div class="sb-title" id="group-config-title">' + esc(S.group_config) + '</div>',
-            /* icon */
-            '<div class="cfg-row">',
-            '<div class="cfg-label">' + esc(S.group_icon) + '</div>',
-            '<div class="emoji-grid-sm" id="grp-icon-picker"></div>',
-            '<div class="cfg-fa-row">',
-            '<i id="grp-fa-prev"></i>',
-            '<input class="prop-input" type="text" id="grp-fa-input" placeholder="' + esc(S.fa_placeholder) + '" oninput="abptfGrpFAInput(this.value)">',
+            '<div class="sb-section abptf-auto-number-panel" id="sb-autonumber-section" style="display:none">',
+            '<div class="sb-title">' + esc(S.auto_number) + '</div>',
+            '<div class="auto-number-row">',
+            '<input class="prop-input" id="auto-prefix" type="text" placeholder="' + esc(S.prefix) + '" style="width:80px;flex:none">',
+            '<input class="prop-input" id="auto-start" type="number" value="1" min="1" style="width:70px;flex:none">',
+            '<button class="btn btn-sm" onclick="abptfAutoNumber()">' + esc(S.apply) + '</button>',
             '</div>',
-            '<div class="cur-icon-row">',
-            '<span class="cur-icon-lbl">' + esc(S.current_icon) + '</span>',
-            '<span id="grp-cur-icon" style="font-size:16px">—</span>',
-            '<button class="btn btn-xs btn-ghost" onclick="abptfGrpClearIcon()">' + esc(S.remove_icon) + '</button>',
+            '<div class="auto-number-note" style="font-size:10px;color:var(--text3)">' + esc(S.apply_to_group) + '</div>',
             '</div>',
+            '<div class="sb-section" id="sb-other-section" style="display:none">',
+            '<div class="sb-title">' + esc(S.cell_type) + '</div>',
+            '<div id="other-type-btns" class="group-btns-grid"></div>',
             '</div>',
-            /* bg image */
-            '<div class="cfg-row">',
-            '<div class="cfg-label">' + esc(S.group_image) + '</div>',
-            '<label class="upload-zone">',
-            '📷 ' + esc(S.upload),
-            '<input type="file" accept="image/*" style="display:none" onchange="abptfGrpSetImage(event)">',
-            '</label>',
-            '<div id="grp-img-preview" style="display:none;margin-top:4px">',
-            '<div id="grp-img-thumb" style="width:100%;height:36px;border-radius:5px;background-size:cover;background-position:center;border:1px solid var(--border);margin-bottom:3px"></div>',
-            '<button class="btn btn-xs btn-danger btn-full" onclick="abptfGrpRemoveImage()">✕ ' + esc(S.remove_bg) + '</button>',
-            '</div>',
-            '</div>',
-            /* label prefix */
-            '<div class="cfg-row">',
-            '<div class="cfg-label">' + esc(S.group_label_prefix) + '</div>',
-            '<input class="prop-input" type="text" id="grp-prefix" placeholder="S" oninput="abptfGrpPrefixInput(this.value)">',
-            '</div>',
-            '</div>',
-
-            /* 4. Grid size */
-            '<div class="sb-section">',
-            '<div class="sb-title">' + esc(S.grid_size) + '</div>',
-            '<div class="rc-row">',
-            '<span class="rc-label">' + esc(S.rows) + '</span>',
-            '<div class="rc-btns"><button class="rc-btn" onclick="abptfRemoveRow()">−</button>',
-            '<span class="rc-count" id="rc-rows">5</span>',
-            '<button class="rc-btn" onclick="abptfAddRow()">+</button></div>',
-            '</div>',
-            '<div class="rc-row">',
-            '<span class="rc-label">' + esc(S.cols) + '</span>',
-            '<div class="rc-btns"><button class="rc-btn" onclick="abptfRemoveCol()">−</button>',
-            '<span class="rc-count" id="rc-cols">5</span>',
-            '<button class="rc-btn" onclick="abptfAddCol()">+</button></div>',
-            '</div>',
-            '</div>',
-
-            /* 5. Selected cell props */
             '<div class="sb-section">',
             '<div class="sb-title">' + esc(S.selected_cell) + '</div>',
             '<div id="props-empty" class="prop-empty">' + esc(S.click_cell) + '</div>',
             '<div id="props-panel" style="display:none">',
             '<div id="multi-sel-bar"></div>',
-            /* seat-only props: label + custom (group handles icon/image) */
             '<div id="seat-props">',
-            '<div class="prop-row"><span class="prop-label">' + esc(S.label) + '</span>',
-            '<input class="prop-input" id="p-label" type="text" oninput="abptfUpdateProp(\'label\',this.value)"></div>',
+            '<div style="font-size:10px;color:var(--text3);padding:6px 0;line-height:1.5">',
+            'Seat label is auto-numbered. Set <strong style="color:var(--text2)">prefix + start</strong> below and click Apply — works on single or multi-selected seats.',
             '</div>',
-            /* non-seat props: icon + bg image + custom */
+            '<div id="seat-cur-label" style="font-size:11px;color:var(--text2);margin-bottom:4px"></div>',
+            '</div>',
             '<div id="nonseat-props" style="display:none">',
             '<div class="cfg-row">',
             '<div class="cfg-label">' + esc(S.cell_icon) + '</div>',
@@ -317,10 +418,9 @@
             '<button class="btn btn-xs btn-danger btn-full" onclick="abptfNSRemoveBG()">✕ ' + esc(S.remove_bg || 'Remove BG') + '</button>',
             '</div>',
             '</div>',
-            '</div>',
-            /* shared: custom, width, rotate, delete */
             '<div class="prop-row"><span class="prop-label">' + esc(S.custom_text) + '</span>',
             '<input class="prop-input" id="p-custom" type="text" oninput="abptfUpdateProp(\'custom\',this.value)"></div>',
+            '</div>',
             '<div class="prop-row" style="align-items:center"><span class="prop-label">' + esc(S.width_cells) + '</span>',
             '<input class="prop-input" id="p-size" type="number" value="1" min="1" max="4" style="width:46px;flex:none" oninput="abptfUpdateProp(\'size\',parseInt(this.value)||1)">',
             '<span style="font-size:10px;color:var(--text3);margin-left:3px">' + esc(S.cells) + '</span></div>',
@@ -330,6 +430,9 @@
             '<span style="font-size:10px;color:var(--text3);margin:0 4px">H px</span>',
             '<input class="prop-input" id="p-cellH" type="number" value="0" min="0" max="400" style="width:50px;flex:none" oninput="abptfUpdateProp(\'cellH\',parseInt(this.value)||0)" title="0=auto">',
             '</div>',
+            '<button class="btn btn-xs btn-ghost btn-full" style="margin-bottom:7px" onclick="abptfApplyWHToAll()" title="Apply this cell W/H to every cell in the grid">',
+            '⤢ Apply W/H to All Cells',
+            '</button>',
             '<div style="margin-bottom:7px"><div class="cfg-label">' + esc(S.rotate) + '</div>',
             '<div class="rot-btns" id="rot-btns">',
             '<button class="rot-btn active" onclick="abptfUpdateProp(\'rotate\',0)">0°</button>',
@@ -340,27 +443,7 @@
             '<button class="btn btn-sm btn-danger btn-full" onclick="abptfDeleteCell()">🗑 ' + esc(S.delete_cell) + '</button>',
             '</div>',
             '</div>',
-
-            /* 6. Auto number */
-            '<div class="sb-section" id="sb-autonumber-section">',
-            '<div class="sb-title">' + esc(S.auto_number) + '</div>',
-            '<div style="display:flex;gap:4px;margin-bottom:3px">',
-            '<input class="prop-input" id="auto-prefix" type="text" placeholder="' + esc(S.prefix) + '" style="width:44px;flex:none">',
-            '<input class="prop-input" id="auto-start" type="number" value="1" min="1" style="width:50px;flex:none">',
-            '<button class="btn btn-sm" onclick="abptfAutoNumber()">' + esc(S.apply) + '</button>',
             '</div>',
-            '<div style="font-size:10px;color:var(--text3)">' + esc(S.apply_to_group) + '</div>',
-            '</div>',
-
-            /* 7. Groups summary */
-            '<div class="sb-section">',
-            '<div class="sb-title">' + esc(S.groups_in_plan) + '</div>',
-            '<div id="group-list">' + esc(S.no_groups) + '</div>',
-            '</div>',
-
-            '</aside>',
-
-            /* canvas */
             '<div class="abptf-main-area">',
             '<div class="canvas-outer">',
             '<div class="canvas-wrap" id="canvas-wrap">',
@@ -375,11 +458,22 @@
 
         buildPalette();
         buildActiveGroupBtns();
-        buildGroupIconPicker();
+        buildOtherTypeBtns();
         buildNonSeatIconPicker();
         buildLegend();
-        refreshGroupConfigPanel();
         updateSidebarForTool();
+        attachBuilderListeners();
+    }
+
+    function attachBuilderListeners() {
+        var saveBtn = document.getElementById('btn-save-plan');
+        if (!saveBtn) return;
+        saveBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (typeof window.abptfSavePlan === 'function') {
+                window.abptfSavePlan();
+            }
+        });
     }
 
     function buildToast() {
@@ -391,15 +485,16 @@
     /* ── SIDEBAR visibility based on active tool ─────────────── */
     function updateSidebarForTool() {
         var isSeat = activeTool === 'seat';
+        var isOther = !isSeat;
         // Active Group section
         var grpSec = document.getElementById('sb-group-section');
         if (grpSec) grpSec.style.display = isSeat ? '' : 'none';
-        // Group Config section
-        var cfgSec = document.getElementById('sb-groupcfg-section');
-        if (cfgSec) cfgSec.style.display = isSeat ? '' : 'none';
         // Auto Number section
-        var numSec = document.getElementById('sb-autonumber-section');
-        if (numSec) numSec.style.display = isSeat ? '' : 'none';
+        var numPanel = document.getElementById('sb-autonumber-section');
+        if (numPanel) numPanel.style.display = isSeat ? '' : 'none';
+        // Other type section
+        var otherSec = document.getElementById('sb-other-section');
+        if (otherSec) otherSec.style.display = isOther ? '' : 'none';
     }
 
     /* ── CONFIG MODE indicator ─────────────────────────────────── */
@@ -408,7 +503,7 @@
         var ind = document.getElementById('config-mode-ind');
         if (!ind) return;
         if (configMode) {
-            var toolLabel = (TOOLS.find(function(t){ return t.type === activeTool; }) || {}).label || activeTool;
+            var toolLabel = getToolLabel(activeTool) || activeTool;
             var grpObj    = getGroupObj(activeGroup);
             if (activeTool === 'blank') {
                 ind.style.display = '';
@@ -432,13 +527,13 @@
             if (!builder || builder.style.display === 'none') return;
 
             var canvasOuter = document.getElementById('canvas-wrap');
-            var sidebar     = document.querySelector('.abptf-sidebar');
 
             // Click is inside a cell → handled by cell click, skip
             if (e.target.closest && e.target.closest('.cell')) return;
 
-            // Click is inside sidebar → skip (user editing props)
-            if (sidebar && sidebar.contains(e.target)) return;
+            // Click is inside top panel → skip (user editing props)
+            var topPanel = document.querySelector('.abptf-top-panel');
+            if (topPanel && topPanel.contains(e.target)) return;
 
             // Click is inside toolbar → skip
             if (e.target.closest && e.target.closest('.abptf-toolbar')) return;
@@ -478,14 +573,23 @@
     function buildPalette() {
         var el = document.getElementById('tool-palette');
         if (!el) return;
+        var isOtherMode = activeTool === 'others' || OTHER_TOOLS.some(function(t) { return t.type === activeTool; });
         el.innerHTML = TOOLS.map(function(t) {
-            return '<div class="tool-btn' + (t.type === activeTool ? ' active-tool' : '') + '"'
+            var active = t.type === activeTool || (t.type === 'others' && isOtherMode);
+            var count = 0;
+            if (t.type === 'seat') {
+                count = getTypeCount('seat');
+            } else if (t.type === 'others') {
+                count = gridData.flat().filter(function(c) { return c && c.type !== 'seat' && c.type !== 'blank'; }).length;
+            }
+            return '<div class="tool-btn' + (active ? ' active-tool' : '') + '"'
                 + ' id="tool-' + t.type + '" draggable="true" data-type="' + t.type + '"'
+                + ' data-action="set-tool" data-action-value="' + t.type + '"'
                 + ' ondragstart="abptfToolDragStart(event,\'' + t.type + '\')"'
-                + ' ondragend="abptfToolDragEnd(event)"'
-                + ' onclick="abptfSetTool(\'' + t.type + '\')">'
+                + ' ondragend="abptfToolDragEnd(event)">'
                 + '<span class="tool-emoji">' + t.emoji + '</span>'
                 + '<span>' + esc(t.label) + '</span>'
+                + '<span class="grp-cnt">' + count + '</span>'
                 + '</div>';
         }).join('');
     }
@@ -498,30 +602,64 @@
         if (!el) return;
         el.innerHTML = GROUPS.map(function(g) {
             var isActive = g.key === activeGroup;
-            var cfg      = groupConfig[g.key] || {};
-            var showIcon = cfg.icon || g.defaultIcon;
+            var showIcon = g.defaultIcon;
+            var count = getGroupSeatCount(g.key);
             return '<button class="grp-type-btn' + (isActive ? ' active' : '') + '"'
                 + ' data-gkey="' + g.key + '"'
-                + (isActive ? ' style="border-color:' + g.color + ';background:' + g.color + '18"' : '')
-                + ' onclick="abptfSetActiveGroup(\'' + g.key + '\')">'
+                + ' data-action="set-active-group" data-action-value="' + g.key + '"'
+                + (isActive ? ' style="border-color:' + g.color + ';background:' + g.color + '18"' : '') + '>'
                 + '<span class="grp-dot" style="background:' + g.color + '"></span>'
                 + (showIcon ? '<span>' + showIcon + '</span>' : '')
                 + '<span>' + esc(g.label) + '</span>'
-                + '<span class="grp-cnt" id="agcnt-' + (g.key || 'none') + '"></span>'
+                + '<span class="grp-cnt">' + count + '</span>'
                 + '</button>';
         }).join('');
+    }
+
+    function getTypeCount(type) {
+        var count = 0;
+        gridData.forEach(function(row) {
+            row.forEach(function(cell) {
+                if (cell && cell.type === type) count++;
+            });
+        });
+        return count;
+    }
+
+    function buildOtherTypeBtns() {
+        var el = document.getElementById('other-type-btns');
+        if (!el) return;
+        if (activeTool === 'others') {
+            activeTool = OTHER_TOOLS[0] ? OTHER_TOOLS[0].type : 'blank';
+        }
+        el.innerHTML = OTHER_TOOLS.map(function(t) {
+            var isActive = t.type === activeTool;
+            var count = getTypeCount(t.type);
+            return '<button class="grp-type-btn' + (isActive ? ' active' : '') + '"'
+                + ' data-action="set-tool" data-action-value="' + t.type + '"'
+                + (isActive ? ' style="border-color:#666;background:var(--bg2)"' : '') + '>'
+                + '<span>' + t.emoji + '</span>'
+                + '<span>' + esc(t.label) + '</span>'
+                + '<span class="grp-cnt">' + count + '</span>'
+                + '</button>';
+        }).join('');
+    }
+
+    function refreshSidebarCounters() {
+        buildPalette();
+        buildActiveGroupBtns();
+        buildOtherTypeBtns();
+    }
+
+    function getToolLabel(type) {
+        var tool = TOOLS.concat(OTHER_TOOLS).find(function(t) { return t.type === type; });
+        return tool ? tool.label : type;
     }
 
     /* ═══════════════════════════════════════════════════════════
        GROUP CONFIG PANEL  (icon / image / prefix for active group)
        ═══════════════════════════════════════════════════════════ */
-    function buildGroupIconPicker() {
-        var el = document.getElementById('grp-icon-picker');
-        if (!el) return;
-        el.innerHTML = EMOJI_LIST.map(function(ic) {
-            return '<div class="icon-opt" data-icon="' + ic + '" onclick="abptfGrpPickIcon(\'' + ic + '\')">' + ic + '</div>';
-        }).join('');
-    }
+
 
     function refreshGroupConfigPanel() {
         var g   = getGroupObj(activeGroup);
@@ -550,10 +688,6 @@
         var thumbEl  = document.getElementById('grp-img-thumb');
         if (prevEl)  prevEl.style.display = hasImg ? '' : 'none';
         if (hasImg && thumbEl) thumbEl.style.backgroundImage = 'url(' + cfg.bgImage + ')';
-
-        // prefix
-        var pfxEl = document.getElementById('grp-prefix');
-        if (pfxEl) pfxEl.value = cfg.labelPrefix !== undefined ? cfg.labelPrefix : (g.defaultPrefix || 'S');
     }
 
     window.abptfGrpPickIcon = function(icon) {
@@ -604,12 +738,6 @@
         groupConfig[activeGroup] = cfg;
         refreshGroupConfigPanel();
         renderGrid();
-    };
-
-    window.abptfGrpPrefixInput = function(val) {
-        var cfg = groupConfig[activeGroup] || {};
-        cfg.labelPrefix = val;
-        groupConfig[activeGroup] = cfg;
     };
 
     /* ═══════════════════════════════════════════════════════════
@@ -725,12 +853,12 @@
         var lEl = document.getElementById('view-list');
         var bEl = document.getElementById('view-builder');
         var bb  = document.getElementById('btn-back');
-        var bn  = document.getElementById('btn-new-top');
+
         var ctx = document.getElementById('topbar-ctx');
         if (lEl) lEl.style.display = v === 'list'    ? 'block' : 'none';
         if (bEl) bEl.style.display = v === 'builder' ? 'block' : 'none';
         if (bb)  bb.style.display  = v === 'builder' ? '' : 'none';
-        if (bn)  bn.style.display  = v === 'list'    ? '' : 'none';
+
         if (ctx) ctx.textContent   = v === 'list' ? S.plans : S.builder;
         if (v === 'list') renderPlansList();
     };
@@ -739,12 +867,17 @@
        TOOL
        ═══════════════════════════════════════════════════════════ */
     window.abptfSetTool = function(type) {
-        activeTool = type;
+        if (type === 'others') {
+            activeTool = activeOther || (OTHER_TOOLS[0] ? OTHER_TOOLS[0].type : 'blank');
+        } else if (OTHER_TOOLS.some(function(t) { return t.type === type; })) {
+            activeTool = type;
+            activeOther = type;
+        } else {
+            activeTool = type;
+        }
         configMode = true;   // blank also needs ON to apply to cells
-        document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active-tool'); });
-        var el = document.getElementById('tool-' + type);
-        if (el) el.classList.add('active-tool');
         updateSidebarForTool();
+        refreshSidebarCounters();
         updateConfigModeIndicator();
     };
 
@@ -765,13 +898,11 @@
     window.abptfSetActiveGroup = function(key) {
         activeGroup = key;
         configMode  = true;
-        buildActiveGroupBtns();
+        refreshSidebarCounters();
         refreshGroupConfigPanel();
-        updateGroupCounts();
-        // auto-fill auto-number prefix from group config
-        var cfg = groupConfig[key] || {};
-        var g   = getGroupObj(key);
-        setVal('auto-prefix', cfg.labelPrefix !== undefined ? cfg.labelPrefix : (g.defaultPrefix || ''));
+        // auto-fill auto-number prefix with this group's default
+        var g = getGroupObj(key);
+        setVal('auto-prefix', g.defaultPrefix || '');
         updateConfigModeIndicator();
     };
 
@@ -810,11 +941,55 @@
     };
 
     function updateRCCount() {
-        var r = document.getElementById('rc-rows');
-        var c = document.getElementById('rc-cols');
-        if (r) r.textContent = gridData.length;
-        if (c) c.textContent = (gridData[0] || []).length;
+        var r = document.getElementById('rc-input-rows');
+        var c = document.getElementById('rc-input-cols');
+        if (r) r.value = gridData.length;
+        if (c) c.value = (gridData[0] || []).length;
     }
+
+    window.abptfSetRows = function(val) {
+        var rows = parseInt(val, 10);
+        if (!rows || rows < 1) rows = 1;
+        var cols = (gridData[0] || []).length || 1;
+        if (rows === gridData.length) {
+            updateRCCount();
+            return;
+        }
+        if (rows > gridData.length) {
+            for (var r = gridData.length; r < rows; r++) {
+                var row = [];
+                for (var c = 0; c < cols; c++) row.push(mkCell());
+                gridData.push(row);
+            }
+        } else {
+            gridData.splice(rows);
+            if (!gridData.length) {
+                gridData = [Array.from({ length: cols }, function() { return mkCell(); })];
+            }
+        }
+        updateRCCount();
+        renderGrid();
+    };
+
+    window.abptfSetCols = function(val) {
+        var cols = parseInt(val, 10);
+        if (!cols || cols < 1) cols = 1;
+        var rows = gridData.length || 1;
+        if (cols === (gridData[0] || []).length) {
+            updateRCCount();
+            return;
+        }
+        gridData.forEach(function(row) {
+            if (!row) return;
+            if (cols > row.length) {
+                for (var c = row.length; c < cols; c++) row.push(mkCell());
+            } else {
+                row.splice(cols);
+            }
+        });
+        updateRCCount();
+        renderGrid();
+    };
 
     /* ═══════════════════════════════════════════════════════════
        MULTI-SELECT
@@ -846,6 +1021,26 @@
     }
     window.applyToMultiSel = applyToMultiSel;
 
+    window.abptfApplyWHToMultiSel = function() {
+        if (!multiSel.size) return;
+        var w = parseInt(getVal('ms-cellW')) || 0;
+        var h = parseInt(getVal('ms-cellH')) || 0;
+        if (!w && !h) { showToast('Set a W or H value first', 'error'); return; }
+
+        var count = 0;
+        multiSel.forEach(function(key) {
+            var p = key.split('-');
+            var r = parseInt(p[0]), c = parseInt(p[1]);
+            if (gridData[r] && gridData[r][c]) {
+                gridData[r][c].cellW = w;
+                gridData[r][c].cellH = h;
+                count++;
+            }
+        });
+        renderGrid();
+        showToast('Applied ' + w + '×' + (h||44) + 'px to ' + count + ' selected cells ✓', 'success');
+    };
+
     function showMultiSelBar() {
         var bar = document.getElementById('multi-sel-bar');
         if (!bar) return;
@@ -861,7 +1056,17 @@
             '<div class="multisel-bar">'
             + '<div class="multisel-count">' + multiSel.size + ' cells selected</div>'
             + '<div class="multisel-desc">Set Cell Type + Group → apply to all.</div>'
-            + '<button class="btn btn-sm btn-primary btn-full" onclick="applyToMultiSel()" style="margin-bottom:4px">✓ ' + esc(S.multisel_apply) + '</button>'
+            + '<button class="btn btn-sm btn-primary btn-full" onclick="applyToMultiSel()" style="margin-bottom:8px">✓ ' + esc(S.multisel_apply) + '</button>'
+            + '<div style="border-top:1px solid var(--border);padding-top:8px;margin-bottom:8px">'
+            + '<div style="font-size:10px;color:var(--text2);margin-bottom:5px">Custom size for selected:</div>'
+            + '<div style="display:flex;align-items:center;gap:4px;margin-bottom:5px">'
+            + '<span style="font-size:10px;color:var(--text3)">W</span>'
+            + '<input class="prop-input" id="ms-cellW" type="number" value="0" min="0" max="400" style="width:50px;flex:none" title="0=auto">'
+            + '<span style="font-size:10px;color:var(--text3);margin-left:4px">H</span>'
+            + '<input class="prop-input" id="ms-cellH" type="number" value="0" min="0" max="400" style="width:50px;flex:none" title="0=auto">'
+            + '</div>'
+            + '<button class="btn btn-xs btn-primary btn-full" onclick="abptfApplyWHToMultiSel()">⤢ Apply Size to Selection</button>'
+            + '</div>'
             + '<button class="btn btn-xs btn-ghost btn-full" onclick="abptfClearMultiSel()">✕ ' + esc(S.multisel_clear) + '</button>'
             + '</div>';
     }
@@ -954,26 +1159,29 @@
                 var cfg     = groupConfig[cell.group] || {};
                 var grpCls  = isSeat && cell.group ? ' grp-' + cell.group : '';
                 var selCls  = isSel ? ' selected' : (isDR ? ' drag-range' : '');
+                // Matching-type highlight: when active tool is seat + a group is chosen,
+                // every seat already belonging to that group gets a soft highlight ring
+                // (separate from multiSel — purely informational, click still works normally)
+                var isMatching = false;
+                if (configMode && cell.type === activeTool) {
+                    if (activeTool === 'seat') {
+                        isMatching = (activeGroup === '' ? false : cell.group === activeGroup);
+                    } else {
+                        isMatching = true; // non-seat: matching just means same type
+                    }
+                }
+                var matchCls = (isMatching && !isSel) ? ' type-match' : '';
 
                 var cellContent = '';
                 if (isBlank) {
                     cellContent = '<div class="cell-inner blank-inner"><span style="font-size:11px;opacity:.3">+</span></div>';
                 } else if (isSeat) {
-                    // Seat: icon from groupConfig (emoji or FA), then bgImage from groupConfig
-                    var bgStyle = '';
-                    if (cfg.bgImage) bgStyle = 'background-image:url(' + cfg.bgImage + ');background-size:cover;background-position:center;';
-                    var iconHtml = '';
-                    if (cfg.faIcon)     iconHtml = '<i class="cell-fa ' + esc(cfg.faIcon) + '"></i>';
-                    else if (cfg.icon)  iconHtml = '<span class="cell-icon">' + cfg.icon + '</span>';
-                    else if (grp.defaultIcon) iconHtml = '<span class="cell-icon">' + grp.defaultIcon + '</span>';
-                    cellContent =
-                        (cfg.bgImage ? '<div class="cell-bg-overlay"></div>' : '')
-                        + '<div class="cell-inner">'
+                    var iconHtml = grp.defaultIcon ? '<span class="cell-icon">' + grp.defaultIcon + '</span>' : '';
+                    cellContent = '<div class="cell-inner">'
                         + iconHtml
                         + (cell.label  ? '<span class="cell-lbl">' + esc(cell.label) + '</span>' : '')
                         + (cell.custom ? '<span class="cell-custom">' + esc(cell.custom) + '</span>' : '')
                         + '</div>';
-                    rot += (bgStyle ? ';' + bgStyle : '');
                 } else {
                     // Non-seat: own icon + optional bgImage
                     var nsIcon = '';
@@ -991,7 +1199,7 @@
                     if (cell.bgImage) rot += ';' + nsBgStyle;
                 }
 
-                html += '<div class="cell cell-' + cell.type + grpCls + selCls + '"'
+                html += '<div class="cell cell-' + cell.type + grpCls + selCls + matchCls + '"'
                     + ' style="width:' + w + 'px;' + hStyle + rot + '"'
                     + ' data-r="' + r + '" data-c="' + c + '"'
                     + ' onclick="abptfCellClick(event,' + r + ',' + c + ')"'
@@ -1004,7 +1212,8 @@
         });
 
         inner.innerHTML = html;
-        updateStats(); updateGroupList(); updateGroupCounts();
+        updateStats();
+        refreshSidebarCounters();
         initDragSelect();
     }
 
@@ -1015,14 +1224,13 @@
         e.stopPropagation();
         var key = r + '-' + c;
 
-        // Multi-select: apply/toggle (always uses configMode apply)
-        if (multiSel.size > 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-            multiSel.add(key); applyToMultiSel(); return;
-        }
+        // Ctrl/Cmd+Click → toggle this cell into/out of the multi-selection
         if (e.ctrlKey || e.metaKey) {
             if (multiSel.has(key)) multiSel.delete(key); else multiSel.add(key);
             selCell = [r, c]; showMultiSelBar(); renderGrid(); return;
         }
+
+        // Shift+Click → extend selection as a rectangle from the last selected cell
         if (e.shiftKey && selCell) {
             var r0 = selCell[0], c0 = selCell[1];
             var rMin = Math.min(r0, r), rMax = Math.max(r0, r);
@@ -1032,13 +1240,22 @@
             showMultiSelBar(); renderGrid(); return;
         }
 
+        // Plain click (no modifier):
+        //  - If this cell is ALREADY part of the current multi-selection,
+        //    treat it as "commit": apply active tool+group to the whole selection.
+        //  - Otherwise (clicking a cell OUTSIDE the current selection),
+        //    drop the old selection entirely and start fresh on just this cell.
+        if (multiSel.size > 0 && multiSel.has(key)) {
+            applyToMultiSel();
+            return;
+        }
+
         multiSel.clear();
 
         var cellIsBlank = gridData[r] && gridData[r][c] && gridData[r][c].type === 'blank';
 
         if (configMode || cellIsBlank) {
-            // Config mode: apply active tool + group to this cell
-            // Also: blank cell ALWAYS applies active tool (restores it) even without configMode
+            // Apply active tool + group to just this single cell
             applyTool(activeTool, r, c);
         }
         // Always show the cell's config in sidebar
@@ -1049,7 +1266,7 @@
        APPLY TOOL
        ═══════════════════════════════════════════════════════════ */
     function applyTool(type, r, c) {
-        if (!type) return;
+        if (!type || type === 'others') return;
         var old        = gridData[r][c] || {};
         var isSeatType = type === 'seat';
         var isBlankType= type === 'blank';
@@ -1111,7 +1328,12 @@
         }
 
         if (cell && isSeat) {
-            setVal('p-label', cell.label || '');
+            var curLblEl = document.getElementById('seat-cur-label');
+            if (curLblEl) {
+                curLblEl.innerHTML = cell.label
+                    ? 'Current label: <strong style="color:var(--text)">' + esc(cell.label) + '</strong>'
+                    : '<span style="color:var(--text3)">No label yet</span>';
+            }
         }
         if (cell && isNS) {
             setVal('ns-fa-input', cell.faIcon || '');
@@ -1168,6 +1390,27 @@
         renderGrid();
     };
 
+    window.abptfApplyWHToAll = function() {
+        if (!selCell) return;
+        var srcCell = gridData[selCell[0]][selCell[1]];
+        if (!srcCell) return;
+        var w = srcCell.cellW || 0;
+        var h = srcCell.cellH || 0;
+        if (!w && !h) { showToast('Set a W or H value first', 'error'); return; }
+
+        var count = 0;
+        gridData.forEach(function(row) {
+            row.forEach(function(cell) {
+                if (!cell) return;
+                cell.cellW = w;
+                cell.cellH = h;
+                count++;
+            });
+        });
+        renderGrid();
+        showToast('Applied ' + w + '×' + (h||44) + 'px to ' + count + ' cells ✓', 'success');
+    };
+
     window.abptfDeleteCell = function() {
         if (!selCell) return;
         gridData[selCell[0]][selCell[1]] = mkCell('blank');
@@ -1207,41 +1450,77 @@
         var prefix = getVal('auto-prefix') || '';
         var n      = parseInt(getVal('auto-start')) || 1;
 
-        // Step 1: collect all labels belonging to seats NOT in scope (preserve them)
+        // Determine target seats:
+        //  - If multiSel has cells → apply ONLY to selected seats (ignore activeGroup filter)
+        //  - Else if a single cell is selected and it's a seat → apply to that one seat
+        //  - Else → apply to all seats matching activeGroup (or all seats if no group active)
+        var targets = []; // [{r,c,cell}]
+
+        if (multiSel.size > 0) {
+            multiSel.forEach(function(key) {
+                var p = key.split('-');
+                var r = parseInt(p[0]), c = parseInt(p[1]);
+                var cell = gridData[r] && gridData[r][c];
+                if (cell && cell.type === 'seat') targets.push({ r:r, c:c, cell:cell });
+            });
+        } else if (selCell) {
+            var sc = gridData[selCell[0]] && gridData[selCell[0]][selCell[1]];
+            if (sc && sc.type === 'seat') targets.push({ r:selCell[0], c:selCell[1], cell:sc });
+        }
+
+        if (!targets.length) {
+            // Fallback: no selection → apply to all seats in active group scope
+            gridData.forEach(function(row, r) {
+                row.forEach(function(cell, c) {
+                    if (!cell || cell.type !== 'seat') return;
+                    if (activeGroup === '' || cell.group === activeGroup) targets.push({ r:r, c:c, cell:cell });
+                });
+            });
+        }
+
+        if (!targets.length) { showToast('No seats to number — select a seat or group first', 'error'); return; }
+
+        // Collect labels of seats NOT being renumbered (preserve uniqueness against them)
+        var targetKeys = {};
+        targets.forEach(function(t) { targetKeys[t.r + '-' + t.c] = true; });
+
         var outOfScopeLabels = {};
-        gridData.forEach(function(row) {
-            row.forEach(function(cell) {
+        gridData.forEach(function(row, r) {
+            row.forEach(function(cell, c) {
                 if (!cell || cell.type !== 'seat') return;
-                var inScope = (activeGroup === '' || cell.group === activeGroup);
-                if (!inScope && cell.label) outOfScopeLabels[cell.label] = true;
+                if (!targetKeys[r + '-' + c] && cell.label) outOfScopeLabels[cell.label] = true;
             });
         });
 
-        // Step 2: during numbering, skip any label that clashes with out-of-scope OR already assigned
         var assigned = {};
         function safeNextLabel() {
             var label, safety = 0;
             do {
                 label = prefix + n++;
                 safety++;
-                if (safety > 10000) break; // prevent infinite loop
+                if (safety > 10000) break;
             } while (outOfScopeLabels[label] || assigned[label]);
             assigned[label] = true;
             return label;
         }
 
-        // Step 3: apply to in-scope seats
-        gridData.forEach(function(row) {
-            row.forEach(function(cell) {
-                if (!cell || cell.type !== 'seat') return;
-                if (activeGroup === '' || cell.group === activeGroup) {
-                    cell.label = safeNextLabel();
-                }
-            });
+        targets.forEach(function(t) {
+            t.cell.label = safeNextLabel();
         });
 
         renderGrid();
-        showToast(S.numbers_ok);
+        showToast(S.numbers_ok + ' (' + targets.length + ' seats)', 'success');
+
+        // Refresh current-label display if a single seat was being inspected
+        if (selCell) {
+            var curLblEl = document.getElementById('seat-cur-label');
+            var sc2 = gridData[selCell[0]] && gridData[selCell[0]][selCell[1]];
+            if (curLblEl && sc2 && sc2.type === 'seat') {
+                curLblEl.innerHTML = sc2.label
+                    ? 'Current label: <strong style="color:var(--text)">' + esc(sc2.label) + '</strong>'
+                    : '<span style="color:var(--text3)">No label yet</span>';
+            }
+        }
     };
 
     window.abptfClearGrid = function() {
@@ -1279,45 +1558,14 @@
        STATS
        ═══════════════════════════════════════════════════════════ */
     function updateStats() {
-        var el = document.getElementById('abptf-stats');
+        var el = document.getElementById('abptf-stats-content');
         if (!el) return;
         var seats = gridData.flat().filter(function(c) { return c && c.type === 'seat'; });
         el.innerHTML =
             '<div class="stat-item"><div class="stat-dot" style="background:var(--green)"></div>'
             + '<span class="stat-label">' + esc(S.total_seats) + '</span>'
             + '<span class="stat-val" style="color:var(--green)">' + seats.length + '</span></div>'
-            + '<div class="stat-item"><div class="stat-dot" style="background:var(--text3)"></div>'
-            + '<span class="stat-label">' + esc(S.rows_x_cols) + '</span>'
-            + '<span class="stat-val">' + gridData.length + '×' + (gridData[0]||[]).length + '</span></div>'
-            + (multiSel.size ? '<div class="stat-item"><span class="stat-label" style="color:var(--accent2)">' + multiSel.size + ' selected</span></div>' : '')
-            + '<div class="stat-item"><span class="stat-label" style="font-style:italic;color:var(--text3)">' + esc(S.status_note) + '</span></div>';
-    }
-
-    function updateGroupList() {
-        var el = document.getElementById('group-list');
-        if (!el) return;
-        var counts = {};
-        gridData.flat().forEach(function(c) {
-            if (c && c.type === 'seat') { var k = c.group || '__none__'; counts[k] = (counts[k] || 0) + 1; }
-        });
-        var chips = GROUPS.filter(function(g) { return counts[g.key || '__none__']; }).map(function(g) {
-            var cls = g.key ? 'grp-chip-' + g.key : 'grp-chip-none';
-            var cfg = groupConfig[g.key] || {};
-            var icon = cfg.icon || g.defaultIcon || '○';
-            return '<span class="grp-chip ' + cls + '">' + icon + ' ' + esc(g.label) + ' <strong>' + (counts[g.key || '__none__'] || 0) + '</strong></span>';
-        }).join('');
-        el.innerHTML = chips || '<span style="color:var(--text3);font-size:10px">' + esc(S.no_groups) + '</span>';
-    }
-
-    function updateGroupCounts() {
-        var counts = {};
-        gridData.flat().forEach(function(c) {
-            if (c && c.type === 'seat') { var k = c.group || ''; counts[k] = (counts[k] || 0) + 1; }
-        });
-        GROUPS.forEach(function(g) {
-            var el = document.getElementById('agcnt-' + (g.key || 'none'));
-            if (el) el.textContent = counts[g.key || ''] ? String(counts[g.key || '']) : '';
-        });
+            + (multiSel.size ? '<div class="stat-item"><span class="stat-label" style="color:var(--accent2)">' + multiSel.size + ' selected</span></div>' : '');
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -1350,6 +1598,7 @@
             action:'abptf_save_sp', nonce:NONCE,
             plan_name:name, plan_bg_image:planBGImg,
             rows:gridData.length, cols:(gridData[0]||[]).length,
+            plan_rows:gridData.length, plan_cols:(gridData[0]||[]).length,
             seat_count:seats.length,
             groups_json:JSON.stringify(groups),
             grid_json:JSON.stringify(cleanGrid),
@@ -1359,12 +1608,27 @@
         if (editingPlanId !== null) payload.plan_db_id = editingPlanId;
 
         fetch(AJAX_URL, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:new URLSearchParams(payload) })
-            .then(function(r) { return r.json(); })
-            .then(function(res) {
-                if (res.success) { editingPlanId = res.data.plan_db_id || editingPlanId; showToast(S.saved_ok,'success'); loadPlans(); }
-                else fallbackSave(payload, cleanGrid, groups, labels, seats.length);
+            .then(function(r) {
+                return r.text().then(function(text) {
+                    try { return JSON.parse(text); }
+                    catch (err) { throw new Error('Invalid JSON response: ' + text); }
+                });
             })
-            .catch(function() { fallbackSave(payload, cleanGrid, groups, labels, seats.length); });
+            .then(function(res) {
+                if (res.success) {
+                    editingPlanId = res.data.plan_db_id || editingPlanId;
+                    showToast(S.saved_ok,'success');
+                    loadPlans();
+                } else {
+                    var msg = res.data && res.data.message ? res.data.message : (res.message || 'Unknown save error');
+                    showToast('Save failed: ' + msg, 'error');
+                    fallbackSave(payload, cleanGrid, groups, labels, seats.length);
+                }
+            })
+            .catch(function(err) {
+                showToast('Save request failed: ' + (err && err.message ? err.message : 'network error'), 'error');
+                fallbackSave(payload, cleanGrid, groups, labels, seats.length);
+            });
     };
 
     function fallbackSave(payload, cleanGrid, groups, labels, seatCount) {
@@ -1397,114 +1661,97 @@
     }
     function loadFallback() {
         try { plans = JSON.parse(localStorage.getItem('abptf_plans_v4') || '[]'); } catch(e) { plans = []; }
+        if (!plans.length) {
+            plans = createDummyBusPlan();
+            saveDummyBusPlanToDb(plans[0]).then(function() {
+                localStorage.setItem('abptf_plans_v4', JSON.stringify(plans));
+                renderPlansList();
+            }).catch(function() {
+                localStorage.setItem('abptf_plans_v4', JSON.stringify(plans));
+                renderPlansList();
+            });
+            return;
+        }
         renderPlansList();
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       PLAN LIST
-       ═══════════════════════════════════════════════════════════ */
-    function renderPlansList() {
-        var grid = document.getElementById('plans-grid');
-        if (!grid) return;
-        if (!plans.length) {
-            grid.innerHTML = '<div class="empty-state"><div class="empty-icon">💺</div>'
-                + '<div class="empty-title">' + esc(S.no_plans) + '</div>'
-                + '<div class="empty-sub">' + esc(S.no_plans_sub) + '</div>'
-                + '<button class="btn btn-primary" onclick="abptfNewPlan()">+ ' + esc(S.create_first) + '</button></div>';
-            return;
+    function createDummyBusPlan() {
+        var rows = 8;
+        var cols = 5;
+        var labels = [];
+        var grid = [];
+        var seatLetters = ['A', 'B', 'C', 'D'];
+
+        for (var r = 0; r < rows; r++) {
+            var row = [];
+            var seatIndex = 0;
+            for (var c = 0; c < cols; c++) {
+                if (c === 2) {
+                    row.push({ type:'blank', size:1, rotate:0, group:'', custom:'', icon:'', faIcon:'', bgImage:'', cellW:0, cellH:0 });
+                } else {
+                    var label = (r + 1) + seatLetters[seatIndex++];
+                    labels.push(label);
+                    row.push({
+                        type: 'seat', label: label, size: 1, rotate: 0,
+                        group: '', custom: '', icon: '', faIcon: '', bgImage: '',
+                        cellW: 0, cellH: 0,
+                    });
+                }
+            }
+            grid.push(row);
         }
-        grid.innerHTML = plans.map(function(p) {
-            var groups = Array.isArray(p.groups_json) ? p.groups_json : [];
-            var gcfg   = p.group_config_json || {};
-            var groupBadges = groups.map(function(g) {
-                var gObj = getGroupObj(g);
-                var cfg2 = gcfg[g] || {};
-                var icon = cfg2.icon || gObj.defaultIcon || '●';
-                return '<span class="badge" style="background:' + gObj.color + '18;color:' + gObj.color + '">' + icon + ' ' + esc(gObj.label) + '</span>';
-            }).join('');
-            return '<div class="plan-card" onclick="abptfOpenEdit(' + p.id + ')">'
-                + '<div class="plan-card-hdr"><div>'
-                + '<div class="plan-card-name">' + esc(p.plan_name) + '</div>'
-                + '<div class="plan-card-id">ID: ' + p.id + '</div></div>'
-                + '<div class="plan-card-acts" onclick="event.stopPropagation()">'
-                + '<button class="btn btn-xs" onclick="abptfOpenEdit(' + p.id + ')">✏️</button>'
-                + '<button class="btn btn-xs btn-danger" onclick="abptfDeletePlan(' + p.id + ')">🗑</button>'
-                + '</div></div>'
-                + '<div class="plan-card-meta">'
-                + '<span class="badge badge-green">💺 ' + p.seat_count + ' ' + esc(S.seats_label) + '</span>'
-                + '<span class="badge badge-muted">' + p.rows + '×' + p.cols + '</span>'
-                + (p.plan_bg_image ? '<span class="badge badge-amber">🖼 BG</span>' : '')
-                + groupBadges + '</div>'
-                + '<div class="plan-mini">' + buildMini(p.grid_json, gcfg) + '</div>'
-                + '</div>';
-        }).join('');
+
+        return [{
+            id: Date.now(),
+            plan_name: 'Dummy Bus Seat Plan',
+            plan_bg_image: '',
+            rows: rows,
+            cols: cols,
+            seat_count: labels.length,
+            groups_json: [''],
+            grid_json: grid,
+            seat_labels_json: labels,
+            group_config_json: {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        }];
     }
 
-    function buildMini(gj, gcfg) {
-        var grid = typeof gj === 'string' ? tryParse(gj) : gj;
-        if (!grid || !grid.length) return '<span style="color:var(--text3);font-size:10px">—</span>';
-        var cm = {driver:'#5F5E5A',door:'#185FA5',toilet:'#534AB7',window:'#3B6D11',food:'#854F0B',luggage:'#712B13',stairs:'#993C1D',aisle:'#30363D',exit:'#A32D2D',blank:'transparent'};
-        var gc = {'':'#1D9E75',vip:'#A78BFA',normal:'#1D9E75',special:'#6366F1',adult:'#EC4899',female:'#F472B6',couple:'#C026D3',business:'#0EA5E9',economy:'#84CC16'};
-        return grid.slice(0,6).map(function(row) {
-            return '<div class="mini-row">' + (row||[]).slice(0,20).map(function(cell) {
-                if (!cell) return '<div class="mini-cell" style="background:transparent"></div>';
-                var bg = cell.type === 'seat' ? (gc[cell.group||'']||'#1D9E75') : (cm[cell.type]||'#30363D');
-                return '<div class="mini-cell" style="background:' + bg + '"></div>';
-            }).join('') + '</div>';
-        }).join('');
+    function saveDummyBusPlanToDb(plan) {
+        var payload = {
+            action: 'abptf_save_sp',
+            nonce: NONCE,
+            plan_name: plan.plan_name,
+            rows: plan.rows,
+            cols: plan.cols,
+            plan_rows: plan.rows,
+            plan_cols: plan.cols,
+            seat_count: plan.seat_count,
+            groups_json: JSON.stringify(plan.groups_json),
+            grid_json: JSON.stringify(plan.grid_json),
+            seat_labels_json: JSON.stringify(plan.seat_labels_json),
+            group_config_json: JSON.stringify(plan.group_config_json),
+            plan_bg_image: plan.plan_bg_image || '',
+            cell_width: 44,
+            cell_height: 44,
+        };
+
+        return fetch(AJAX_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams(payload),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) {
+                plan.id = res.data.plan_db_id || plan.id;
+                return plan;
+            }
+            throw new Error(res.data && res.data.message ? res.data.message : 'Failed to save dummy plan');
+        });
     }
 
-    window.abptfNewPlan = function() {
-        editingPlanId = null; planBGImg = ''; selCell = null; activeGroup = '';
-        multiSel.clear(); isDragSel = false; dragSelStart = null; dragSelEnd = null;
-        initGroupConfig();
-        configMode = false;
-        setVal('plan-name', '');
-        ['btn-rm-bg','props-panel'].forEach(function(id) { var el=document.getElementById(id); if(el) el.style.display='none'; });
-        var emp = document.getElementById('props-empty'); if(emp) emp.style.display='';
-        buildActiveGroupBtns(); refreshGroupConfigPanel();
-        updateConfigModeIndicator();
-        initGrid(5,5); window.abptfShowView('builder');
-    };
 
-    window.abptfOpenEdit = function(id) {
-        var p = null; plans.forEach(function(pl) { if (pl.id === id) p = pl; });
-        if (!p) return;
-        editingPlanId = id; planBGImg = p.plan_bg_image || ''; selCell = null; activeGroup = '';
-        multiSel.clear(); isDragSel = false; dragSelStart = null; dragSelEnd = null;
-        initGroupConfig();
-        configMode = false;
-        // Restore saved group config if present
-        if (p.group_config_json && typeof p.group_config_json === 'object') {
-            Object.keys(p.group_config_json).forEach(function(k) { groupConfig[k] = p.group_config_json[k]; });
-        }
-        setVal('plan-name', p.plan_name);
-        var rmBg = document.getElementById('btn-rm-bg'); if(rmBg) rmBg.style.display = planBGImg ? '' : 'none';
-        var emp  = document.getElementById('props-empty'); if(emp) emp.style.display = '';
-        var pan  = document.getElementById('props-panel'); if(pan) pan.style.display = 'none';
-        gridData = typeof p.grid_json === 'string' ? tryParse(p.grid_json) : JSON.parse(JSON.stringify(p.grid_json));
-        gridData.forEach(function(row) {
-            row && row.forEach(function(cell) {
-                if (!cell) return;
-                if (!('faIcon'  in cell)) cell.faIcon  = '';
-                if (!('bgImage' in cell)) cell.bgImage = '';
-                if (!('cellW'   in cell)) cell.cellW   = 0;
-                if (!('cellH'   in cell)) cell.cellH   = 0;
-            });
-        });
-        buildActiveGroupBtns(); refreshGroupConfigPanel();
-        updateRCCount(); renderGrid(); window.abptfShowView('builder');
-    };
-
-    window.abptfDeletePlan = function(id) {
-        if (!confirm(S.delete_confirm)) return;
-        fetch(AJAX_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({action:'abptf_delete_sp',nonce:NONCE,plan_db_id:id})})
-            .then(function(r){return r.json();}).finally(function(){
-            plans = plans.filter(function(p){return p.id!==id;});
-            localStorage.setItem('abptf_plans_v4', JSON.stringify(plans));
-            renderPlansList(); showToast(S.deleted);
-        });
-    };
 
     /* ═══════════════════════════════════════════════════════════
        UTILS

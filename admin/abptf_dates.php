@@ -187,16 +187,42 @@
 					$date_infos['periodic_start_date'] = $format_date( $post_val( 'periodic_start_date' ) );
 					$date_infos['periodic_end_date']   = $format_date( $post_val( 'periodic_end_date' ) );
 					$date_infos['periodic_after']      = $post_val( 'periodic_after', '1' );
-					$date_infos['weekend']             = $post_val( 'weekend' );
-					$specific_off_dates                = array_filter( $post_array( 'specific_off_dates' ) );
-					$date_infos['specific_off_dates']  = array_unique( array_map( fn( $d ) => gmdate( 'Y-m-d', strtotime( $d ) ), $specific_off_dates ) );
-					$special_on_dates                  = array_filter( $post_array( 'special_on_dates' ) );
-					$date_infos['special_on_dates']    = array_unique( array_map( fn( $d ) => gmdate( 'Y-m-d', strtotime( $d ) ), $special_on_dates ) );
-					$specific_dates                    = array_filter( $post_array( 'specific_dates' ) );
-					$date_infos['specific_dates']      = array_unique( array_map( fn( $d ) => gmdate( 'Y-m-d', strtotime( $d ) ), $specific_dates ) );
-					$off_schedules                     = [];
-					$from_dates                        = $post_array( 'abptf_off_from' );
-					$to_dates                          = $post_array( 'abptf_off_to' );
+					$date_rule                         = $post_val( 'date_rule' );
+					$date_infos['date_rule']           = $post_val( 'date_rule' );
+					$date_rule_array                   = $date_rule ? explode( ',', $date_rule ) : [];
+					if ( in_array( 'weekend', $date_rule_array ) ) {
+						$date_infos['weekend'] = $post_val( 'weekend' );
+					}
+					if ( in_array( 'specific_off_dates', $date_rule_array ) ) {
+						$specific_off_dates               = array_filter( $post_array( 'specific_off_dates' ) );
+						$date_infos['specific_off_dates'] = array_unique( array_map( fn( $d ) => gmdate( 'Y-m-d', strtotime( $d ) ), $specific_off_dates ) );
+					}
+					if ( in_array( 'off_date_range', $date_rule_array ) ) {
+						$off_schedules = [];
+						$from_dates    = $post_array( 'abptf_off_from' );
+						$to_dates      = $post_array( 'abptf_off_to' );
+						foreach ( $from_dates as $key => $from_date ) {
+							if ( $from_date && ! empty( $to_dates[ $key ] ) ) {
+								$off_schedules[] = [ 'from' => $from_date, 'to' => $to_dates[ $key ] ];
+							}
+						}
+						$date_infos['off_date_range'] = $off_schedules;
+					}
+					if ( in_array( 'special_on_dates', $date_rule_array ) ) {
+						$special_on_dates = $post_array( 'special_on_dates' );
+						$on_start         = $post_array( 'special_on_time_start' );
+						$on_end           = $post_array( 'special_on_time_end' );
+						$specific_on      = [];
+						foreach ( $special_on_dates as $key => $date ) {
+							if ( $date ) {
+								$specific_on[ $key ] = [ 'date' => $format_date( $date ), 'start' => $on_start[ $key ] ?? '', 'end' => $on_end[ $key ] ?? '' ];
+							}
+						}
+						$date_infos['special_on_dates'] = $specific_on;
+					}
+					$off_schedules = [];
+					$from_dates    = $post_array( 'abptf_off_from' );
+					$to_dates      = $post_array( 'abptf_off_to' );
 					foreach ( $from_dates as $key => $from_date ) {
 						if ( $from_date && ! empty( $to_dates[ $key ] ) ) {
 							$off_schedules[] = [ 'from' => $from_date, 'to' => $to_dates[ $key ] ];
@@ -289,25 +315,25 @@
 			}
 
 			public function special_on_off_dates( $date_infos = [] ): void {
-				$date_type          = ( $date_infos['date_type'] ?? null ) ?: 'periodic_date';
-				$weekend            = $date_infos['weekend'] ?? '';
-				$weekend_array      = $weekend ? explode( ',', $weekend ) : [];
-				$days               = ABPTF_Layout::week_day();
-				$date_rules         = ABPTF_Layout::date_option_rules();
-				$specific_off_dates = $date_infos['specific_off_dates'] ?? [];
-				$off_date_range     = $date_infos['off_date_range'] ?? [];
-				$special_dates      = $date_infos['special_on_dates'] ?? [];
+				$date_rule       = $date_infos['date_rule'] ?? '';
+				$date_rule_array = $date_rule ? explode( ',', $date_rule ) : [];
+				$date_type       = ( $date_infos['date_type'] ?? null ) ?: 'periodic_date';
+				$weekend         = $date_infos['weekend'] ?? '';
+				$weekend_array   = $weekend ? explode( ',', $weekend ) : [];
+				$days            = ABPTF_Layout::week_day();
+				$date_rules      = ABPTF_Layout::date_option_rules();
 				?>
                 <div class="<?php echo esc_attr( $date_type == 'periodic_date' ? 'abp_active' : '' ); ?>" data-close="#periodic_date">
                     <div class="group_setting _mar_t_xs">
                         <div class="setting_item full_width">
                             <div class="_fj_between _mar_t_xs">
                                 <span class="_abp_label"><?php esc_html_e( 'Special On/Off Date(optional)', 'abp-transportforge' ); ?></span>
-                                <div class="custom_checkbox">
+                                <div class="custom_checkbox _group_content">
+                                    <input type="hidden" name="date_rule" value="<?php echo esc_attr( $date_rule ); ?>"/>
 									<?php foreach ( $date_rules as $key => $rule ) { ?>
                                         <div class="checkbox_item _min_100">
-                                            <button type="button" class="_btn_light_info_xs <?php echo esc_attr( in_array( (string) $key, $date_infos, true ) ? 'abp_active' : '' ); ?>" data-collapse-target="#<?php echo esc_attr( $key ); ?>" data-checked="<?php echo esc_attr( $key ); ?>" data-open-icon="fa-check-square" data-close-icon="fa-square">
-                                                <span data-icon class="_mar_r_xs far <?php echo esc_attr( in_array( (string) $key, $date_infos, true ) ? 'far fa-check-square' : 'fa-square' ); ?>"></span><?php echo esc_html( $rule ); ?>
+                                            <button type="button" class="_btn_light_info_xs <?php echo esc_attr( in_array( $key, $date_rule_array, true ) ? 'abp_active' : '' ); ?>" data-collapse-target="#<?php echo esc_attr( $key ); ?>" data-checked="<?php echo esc_attr( $key ); ?>" data-open-icon="fa-check-square" data-close-icon="fa-square">
+                                                <span data-icon class="_mar_r_xs far <?php echo esc_attr( in_array( $key, $date_rule_array, true ) ? 'far fa-check-square' : 'fa-square' ); ?>"></span><?php echo esc_html( $rule ); ?>
                                             </button>
                                         </div>
 									<?php } ?>
@@ -316,10 +342,10 @@
                             <div class="_divider_xs"></div>
 							<?php ABPTF_Layout::info_text( 'date_rule' ); ?>
                         </div>
-                        <div class="setting_item full_width <?php echo esc_attr( in_array( 'weekend', $date_infos, true ) ? 'abp_active' : '' ); ?> " data-collapse="#weekend">
+                        <div class="setting_item full_width <?php echo esc_attr( in_array( 'weekend', $date_rule_array, true ) ? 'abp_active' : '' ); ?> " data-collapse="#weekend">
                             <div class="_f_wrap_fj_between_fa_center">
                                 <span class="_abp_label"><?php esc_html_e( 'Weekend(optional)', 'abp-transportforge' ); ?></span>
-                                <div class="custom_checkbox">
+                                <div class="custom_checkbox _group_content">
                                     <input type="hidden" name="weekend" value="<?php echo esc_attr( $weekend ); ?>"/>
 									<?php foreach ( $days as $key => $day ) { ?>
                                         <div class="checkbox_item _min_100">
@@ -333,14 +359,15 @@
                             <div class="_divider_xs"></div>
 							<?php ABPTF_Layout::info_text( 'weekend' ); ?>
                         </div>
-                        <div class="setting_item configuration_content <?php echo esc_attr( in_array( 'specific_off_dates', $date_infos, true ) ? 'abp_active' : '' ); ?>" data-collapse="#specific_of_date">
+                        <div class="setting_item configuration_content <?php echo esc_attr( in_array( 'specific_off_dates', $date_rule_array, true ) ? 'abp_active' : '' ); ?>" data-collapse="#specific_off_dates">
                             <div class="_fj_between_fa_center">
                                 <span class="_abp_label"><?php esc_html_e( 'Specific Off Dates(optional)', 'abp-transportforge' ); ?></span>
 								<?php ABPTF_Layout::button_add_xs( __( 'Add Specific Off Date', 'abp-transportforge' ) ); ?>
                             </div>
+							<?php ABPTF_Layout::info_text( 'specific_off_dates' ); ?>
                             <div class="_divider_xs"></div>
                             <div class="insertable_area sortable_area _f_wrap_gap_xs">
-								<?php
+								<?php $specific_off_dates = $date_infos['specific_off_dates'] ?? [];
 									if ( sizeof( $specific_off_dates ) ) {
 										foreach ( $specific_off_dates as $specific_date ) {
 											if ( $specific_date ) {
@@ -355,42 +382,16 @@
 									<?php $this->date_item( 'specific_off_dates[]' ); ?>
                                 </div>
                             </div>
-                            <div class="_divider_xs"></div>
-							<?php ABPTF_Layout::info_text( 'specific_off_dates' ); ?>
                         </div>
-                        <div class="setting_item configuration_content <?php echo esc_attr( in_array( 'off_date_range', $date_infos, true ) ? 'abp_active' : '' ); ?>" data-collapse="#off_date_range">
-                            <div class="_fj_between_fa_center">
-                                <span class="_abp_label"><?php esc_html_e( 'Off Date Range(optional)', 'abp-transportforge' ); ?></span>
-								<?php ABPTF_Layout::button_add_xs( __( 'Add Off Date Range', 'abp-transportforge' ) ); ?>
-                            </div>
-                            <div class="_divider_xs"></div>
-                            <div class="insertable_area sortable_area _f_wrap_gap_xs">
-								<?php
-									if ( sizeof( $off_date_range ) ) {
-										foreach ( $off_date_range as $specific_date ) {
-											if ( sizeof( $specific_date ) > 0 && $specific_date['from'] && $specific_date['to'] ) {
-												$this->off_day_range( $specific_date['from'], $specific_date['to'] );
-											}
-										}
-									}
-								?>
-                            </div>
-                            <div class="abptf_d_none">
-                                <div class="hidden_content">
-									<?php $this->off_day_range(); ?>
-                                </div>
-                            </div>
-                            <div class="_divider_xs"></div>
-							<?php ABPTF_Layout::info_text( 'off_date_range' ); ?>
-                        </div>
-                        <div class="setting_item configuration_content  <?php echo esc_attr( in_array( 'special_on_dates', $date_infos, true ) ? 'abp_active' : '' ); ?>" data-collapse="#special_on_dates">
+                        <div class="setting_item configuration_content  <?php echo esc_attr( in_array( 'special_on_dates', $date_rule_array, true ) ? 'abp_active' : '' ); ?>" data-collapse="#special_on_dates">
                             <div class="_fj_between_fa_center">
                                 <span class="_abp_label"><?php esc_html_e( 'Special On Dates (optional)', 'abp-transportforge' ); ?></span>
 								<?php ABPTF_Layout::button_add_xs( __( 'Add Special On Dates', 'abp-transportforge' ) ); ?>
                             </div>
+							<?php ABPTF_Layout::info_text( 'special_on_dates' ); ?>
                             <div class="_divider_xs"></div>
                             <div class="insertable_area sortable_area _f_wrap_gap_xs">
-								<?php
+								<?php $special_dates = $date_infos['special_on_dates'] ?? [];
 									if ( sizeof( $special_dates ) ) {
 										foreach ( $special_dates as $specific_date ) {
 											if ( ! empty( $specific_date ) ) {
@@ -405,8 +406,30 @@
 									<?php $this->date_item( 'special_on_dates[]' ); ?>
                                 </div>
                             </div>
+                        </div>
+                        <div class="setting_item configuration_content <?php echo esc_attr( in_array( 'off_date_range', $date_rule_array, true ) ? 'abp_active' : '' ); ?>" data-collapse="#off_date_range">
+                            <div class="_fj_between_fa_center">
+                                <span class="_abp_label"><?php esc_html_e( 'Off Date Range(optional)', 'abp-transportforge' ); ?></span>
+								<?php ABPTF_Layout::button_add_xs( __( 'Add Off Date Range', 'abp-transportforge' ) ); ?>
+                            </div>
+							<?php ABPTF_Layout::info_text( 'off_date_range' ); ?>
                             <div class="_divider_xs"></div>
-							<?php ABPTF_Layout::info_text( 'special_on_dates' ); ?>
+                            <div class="insertable_area sortable_area _f_wrap_gap_xs">
+								<?php $off_date_range = $date_infos['off_date_range'] ?? [];
+									if ( sizeof( $off_date_range ) ) {
+										foreach ( $off_date_range as $specific_date ) {
+											if ( sizeof( $specific_date ) > 0 && $specific_date['from'] && $specific_date['to'] ) {
+												$this->off_day_range( $specific_date['from'], $specific_date['to'] );
+											}
+										}
+									}
+								?>
+                            </div>
+                            <div class="abptf_d_none">
+                                <div class="hidden_content">
+									<?php $this->off_day_range(); ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

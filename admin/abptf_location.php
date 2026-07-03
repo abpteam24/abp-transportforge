@@ -56,25 +56,23 @@
 				if ( ! current_user_can( 'manage_options' ) ) {
 					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ) ], 403 );
 				}
-				$post_int       = fn( $key, $default = 0 ) => isset( $_POST[ $key ] ) ? absint( $_POST[ $key ] ) : $default;
-				$post_val       = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : $default;
-				$post_slug      = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? sanitize_title( wp_unslash( $_POST[ $key ] ) ) : $default;
-				$post_array     = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST[ $key ] ) ) : [];
-				$cat_term_id    = $post_int( 'loc_term_id' );
-				$name           = $post_val( 'name' );
-				$slug           = $post_slug( 'slug' );
-				$description    = $post_val( 'description' );
-				$display_pickup = $post_val( 'display_pickup', 'off' );
-				$display_drop   = $post_val( 'display_drop', 'off' );
-				$abptf_post_id  = $post_int( 'abptf_post_id' );
-				$pick_ids       = $post_array( 'pick_id' );
-				$pick_names     = $post_array( 'pick_name' );
-				$pick_times     = $post_array( 'pick_time' );
-				$drop_ids       = $post_array( 'drop_id' );
-				$drop_names     = $post_array( 'drop_name' );
-				$drop_times     = $post_array( 'drop_time' );
+				$post_int      = fn( $key, $default = 0 ) => isset( $_POST[ $key ] ) ? absint( $_POST[ $key ] ) : $default;
+				$post_val      = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : $default;
+				$post_slug     = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? sanitize_title( wp_unslash( $_POST[ $key ] ) ) : $default;
+				$post_array    = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST[ $key ] ) ) : [];
+				$cat_term_id   = $post_int( 'loc_term_id' );
+				$name          = $post_val( 'name' );
+				$slug          = $post_slug( 'slug' );
+				$description   = $post_val( 'description' );
+				$abptf_post_id = $post_int( 'abptf_post_id' );
+				$pick_ids      = $post_array( 'pick_id' );
+				$pick_names    = $post_array( 'pick_name' );
+				$pick_times    = $post_array( 'pick_time' );
+				$drop_ids      = $post_array( 'drop_id' );
+				$drop_names    = $post_array( 'drop_name' );
+				$drop_times    = $post_array( 'drop_time' );
 				if ( empty( $name ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Location Name cannot be blank!', 'abp-transportforge' ) ] );
+					wp_send_json_error( [ 'html' => '', 'msg' => ABPTF_Function::location_label() . ' ' . __( 'Name cannot be blank!', 'abp-transportforge' ) ] );
 				}
 				if ( $cat_term_id > 0 ) {
 					$result = wp_update_term( $cat_term_id, 'abptf_location', [
@@ -102,12 +100,12 @@
 				if ( ! empty( $pick_names ) ) {
 					foreach ( $pick_names as $key => $pick ) {
 						if ( ! empty( $pick ) ) {
-							$pick_id = $pick_ids[ $key ] ?? '';
-							if ( empty( $pick_id ) ) {
-								$pick_id = 'pick_id_' . $number;
+							$pick_id = isset( $pick_ids[ $key ] ) && $pick_ids[ $key ] !== '' ? (int) $pick_ids[ $key ] : '';
+							if ( $pick_id === '' ) {
+								$pick_id = $number;
 								while ( isset( $pickup_info[ $pick_id ] ) ) {
 									$number ++;
-									$pick_id = 'pick_id_' . $number;
+									$pick_id = $number;
 								}
 							}
 							$pickup_info[ $pick_id ]['name'] = $pick;
@@ -118,12 +116,12 @@
 				if ( ! empty( $drop_names ) ) {
 					foreach ( $drop_names as $key => $drop ) {
 						if ( ! empty( $drop ) ) {
-							$drop_id = $drop_ids[ $key ] ?? '';
-							if ( empty( $drop_id ) ) {
-								$drop_id = 'drop_id_' . $number_drop;
+							$drop_id = isset( $drop_ids[ $key ] ) && $drop_ids[ $key ] !== '' ? (int) $drop_ids[ $key ] : '';
+							if ( $drop_id === '' ) {
+								$drop_id = $number_drop;
 								while ( isset( $drop_info[ $drop_id ] ) ) {
 									$number_drop ++;
-									$drop_id = 'drop_id_' . $number_drop;
+									$drop_id = $number_drop;
 								}
 							}
 							$drop_info[ $drop_id ]['name'] = $drop;
@@ -132,22 +130,23 @@
 					}
 				}
 				$options = [
-					'display_pickup' => $display_pickup,
-					'pick_info'      => $pickup_info,
-					'display_drop'   => $display_drop,
-					'drop_info'      => $drop_info,
+					'pick_info' => $pickup_info,
+					'drop_info' => $drop_info,
 				];
 				$this->update_location( $options, $term_id );
-				$msg = __( 'Location Saved Successfully !', 'abp-transportforge' );
+				$msg = ABPTF_Function::location_label() . ' ' . __( 'Saved Successfully !', 'abp-transportforge' );
 				ob_start();
-				if ( $abptf_post_id > 0 ) {
-					$_location = ABPTF_Function::get_post_info( $abptf_post_id, 'abptf_location' );
-					self::location_selection( $_location );
-				} else {
+				$html = '';
+				if ( empty( $abptf_post_id ) || $abptf_post_id <= 0 ) {
+					ob_start();
 					$this->location_list();
+					$html = ob_get_clean();
 				}
-				$html = ob_get_clean();
-				wp_send_json_success( [ 'html' => $html, 'msg' => $msg ] );
+				wp_send_json_success( [
+					'html'        => $html,
+					'msg'         => $msg,
+					'location_js' => ( ! empty( $abptf_post_id ) && $abptf_post_id > 0 ? ABPTF_Function::location_info_js( $abptf_post_id ) : '' ),
+				] );
 			}
 
 			public function delete_location(): void {
@@ -188,7 +187,7 @@
 						}
 					}
 				}
-				wp_send_json_success( [ 'html' => $html, 'msg' => __( 'Location Deleted Successfully !', 'abp-transportforge' ) ] );
+				wp_send_json_success( [ 'html' => $html, 'msg' => ABPTF_Function::location_label() . ' ' . __( 'Deleted Successfully !', 'abp-transportforge' ) ] );
 			}
 
 			public function add_location(): void {
@@ -205,7 +204,7 @@
 				ob_start();
 				$this->form( $location, $loc_id );
 				$html = ob_get_clean();
-				wp_send_json_success( [ 'html' => $html, 'msg' => __( 'Location Form Loaded Successfully .....! ', 'abp-transportforge' ) ] );
+				wp_send_json_success( [ 'html' => $html, 'msg' => ABPTF_Function::location_label() . ' ' . __( 'Form Loaded Successfully .....! ', 'abp-transportforge' ) ] );
 			}
 
 			public function location_list(): void {
@@ -218,10 +217,10 @@
                         <tr>
                             <th><?php esc_html_e( 'SI', 'abp-transportforge' ) ?></th>
                             <th><?php esc_html_e( 'ID', 'abp-transportforge' ) ?></th>
-                            <th class="_min_150"><?php esc_html_e( 'Location Title', 'abp-transportforge' ) ?></th>
+                            <th class="_min_150"><?php echo esc_html( ABPTF_Function::location_label() ); ?></th>
                             <th><?php esc_html_e( 'Pickup Point', 'abp-transportforge' ) ?></th>
                             <th><?php esc_html_e( 'Drop-off Point', 'abp-transportforge' ) ?></th>
-                            <th><?php esc_html_e( 'Location Full Address', 'abp-transportforge' ) ?></th>
+                            <th><?php esc_html_e( 'Full Address', 'abp-transportforge' ) ?></th>
                             <th><?php esc_html_e( 'Shortcode Post', 'abp-transportforge' ) ?></th>
                             <th><?php esc_html_e( 'Action', 'abp-transportforge' ) ?></th>
                         </tr>
@@ -273,8 +272,8 @@
                                 <td><?php echo esc_html( $description ); ?></td>
                                 <th class="_text_nowrap"><code> [abptf-post loc_id="<?php echo esc_attr( $term_id ); ?>"]</code></th>
                                 <td>
-                                    <div class="_d_flex">
-                                        <button type="button" class="_btn_light_yellow_mar_r_xxs" data-id="<?php echo esc_attr( $term_id ); ?>" data-target-popup="#abptf_global_popup" data-type="location" title="<?php echo esc_attr__( 'Edit : ', 'abp-transportforge' ) . ' ' . esc_attr( $name ); ?>">✍️</button>
+                                    <div class="_group_content">
+                                        <button type="button" class="_btn_light_yellow_xxs" data-id="<?php echo esc_attr( $term_id ); ?>" data-target-popup="#abptf_global_popup" data-type="location" title="<?php echo esc_attr__( 'Edit : ', 'abp-transportforge' ) . ' ' . esc_attr( $name ); ?>">✍️</button>
                                         <button type="button" class="_btn_light_danger_xxs delete_location" data-loc_id="<?php echo esc_attr( $term_id ); ?>" title="<?php echo esc_attr__( 'Trash : ', 'abp-transportforge' ) . ' ' . esc_attr( $name ); ?>">❌</button>
                                     </div>
                                 </td>
@@ -289,18 +288,16 @@
 			}
 
 			public function form( $location = '', $loc_id = '' ): void {
-				$name           = $location['name'] ?? '';
-				$des            = $location['description'] ?? '';
-				$slug           = $location['slug'] ?? '';
-				$display_pickup = $location['display_pickup'] ?? 'off';
-				$pick_infos     = $location['pick_info'] ?? [];
-				$display_drop   = $location['display_drop'] ?? 'off';
-				$drop_infos     = $location['drop_info'] ?? [];
+				$name       = $location['name'] ?? '';
+				$des        = $location['description'] ?? '';
+				$slug       = $location['slug'] ?? '';
+				$pick_infos = $location['pick_info'] ?? [];
+				$drop_infos = $location['drop_info'] ?? [];
 				?>
                 <input type="hidden" name="loc_term_id" value="<?php echo esc_attr( $loc_id ); ?>"/>
                 <div class="setting_item _mar_b_xs">
                     <label class="_f_equal_f_wrap">
-                        <span class="_abp_label"><?php esc_html_e( 'Location Name', 'abp-transportforge' ); ?><sup class="_color_required">*</sup></span>
+                        <span class="_abp_label"><?php echo esc_html( ABPTF_Function::location_label() ); ?><sup class="_color_required">*</sup></span>
                         <input class="_form_control" name="name" value="<?php echo esc_attr( $name ); ?>" placeholder="<?php esc_attr_e( 'Name', 'abp-transportforge' ); ?>" required/>
                     </label>
                     <div class="_divider_xs"></div>
@@ -308,7 +305,7 @@
                 </div>
                 <div class="setting_item _mar_b_xs">
                     <label class="_f_equal_f_wrap">
-                        <span class="_abp_label"><?php esc_html_e( 'Location Slug (Optional)', 'abp-transportforge' ); ?></span>
+                        <span class="_abp_label"><?php echo esc_html( ABPTF_Function::location_label() ) . ' ' . esc_html_e( 'Slug (Optional)', 'abp-transportforge' ); ?></span>
                         <input class="_form_control" name="slug" value="<?php echo esc_attr( $slug ); ?>" placeholder="<?php esc_attr_e( 'Slug', 'abp-transportforge' ); ?>"/>
                     </label>
                     <div class="_divider_xs"></div>
@@ -316,23 +313,18 @@
                 </div>
                 <div class="setting_item _mar_b_xs">
                     <label class="_f_equal_f_wrap">
-                        <span class="_abp_label"><?php esc_html_e( 'Location Full Address(optional)', 'abp-transportforge' ); ?></span>
+                        <span class="_abp_label"><?php esc_html_e( 'Full Address(optional)', 'abp-transportforge' ); ?></span>
                         <textarea class="_form_control" name="description" placeholder="<?php esc_attr_e( 'Address', 'abp-transportforge' ); ?>"><?php echo esc_html( $des ); ?></textarea>
                     </label>
                     <div class="_divider_xs"></div>
 					<?php ABPTF_Layout::info_text( 'loc_des' ); ?>
                 </div>
-                <div class="setting_item _mar_b_xs configuration_content">
-                    <div class="_fj_between">
-                        <div class="_fa_center">
-							<?php ABPTF_Layout::switch_checkbox( 'display_pickup', $display_pickup ); ?>
-                            <span class="_abp_label"><?php esc_html_e( 'Multiple Pickup Point ?', 'abp-transportforge' ); ?></span>
-                        </div>
-                        <div data-collapse="#display_pickup" class=" <?php echo esc_attr( $display_pickup === 'on' ? 'abp_active' : '' ); ?>">
+				<?php if ( ABPTF_Function::on_off( 'pickup' ) ) { ?>
+                    <div class="setting_item _mar_b_xs configuration_content">
+                        <div class="_fj_between_fa_center">
+                            <span class="_abp_label"><?php esc_html_e( 'Multiple Pickup Point', 'abp-transportforge' ); ?></span>
 							<?php ABPTF_Layout::button_add_xs( __( 'Add New Pickup Point', 'abp-transportforge' ) ); ?>
                         </div>
-                    </div>
-                    <div data-collapse="#display_pickup" class=" <?php echo esc_attr( $display_pickup === 'on' ? 'abp_active' : '' ); ?>">
                         <div class="_divider_xs"></div>
                         <div class="insertable_area sortable_area _gap_xs_f_wrap">
 							<?php if ( ! empty( $pick_infos ) ) {
@@ -340,27 +332,22 @@
 									self::pickup_form( $pick_info, $key );
 								}
 							} ?>
-                        </div>
-                        <div class="abptf_d_none">
-                            <div class="hidden_content">
-								<?php self::pickup_form(); ?>
+                            <div class="abptf_d_none">
+                                <div class="hidden_content">
+									<?php self::pickup_form(); ?>
+                                </div>
                             </div>
                         </div>
+                        <div class="_divider_xs"></div>
+						<?php ABPTF_Layout::info_text( 'display_pickup' ); ?>
                     </div>
-                    <div class="_divider_xs"></div>
-					<?php ABPTF_Layout::info_text( 'display_pickup' ); ?>
-                </div>
-                <div class="setting_item configuration_content">
-                    <div class="_fj_between">
-                        <div class="_fa_center">
-							<?php ABPTF_Layout::switch_checkbox( 'display_drop', $display_drop ); ?>
+				<?php } ?>
+				<?php if ( ABPTF_Function::on_off( 'drop' ) ) { ?>
+                    <div class="setting_item configuration_content">
+                        <div class="_fj_between_fa_center">
                             <span class="_abp_label"><?php esc_html_e( 'Multiple Drop Point ?', 'abp-transportforge' ); ?></span>
-                        </div>
-                        <div data-collapse="#display_drop" class="<?php echo esc_attr( $display_drop === 'on' ? 'abp_active' : '' ); ?>">
 							<?php ABPTF_Layout::button_add_xs( __( 'Add New Drop Point', 'abp-transportforge' ) ); ?>
                         </div>
-                    </div>
-                    <div data-collapse="#display_drop" class="<?php echo esc_attr( $display_drop === 'on' ? 'abp_active' : '' ); ?>">
                         <div class="_divider_xs"></div>
                         <div class="insertable_area sortable_area _gap_xs_fd_column">
 							<?php if ( ! empty( $drop_infos ) ) {
@@ -374,10 +361,10 @@
 								<?php self::drop_form(); ?>
                             </div>
                         </div>
+                        <div class="_divider_xs"></div>
+						<?php ABPTF_Layout::info_text( 'display_drop' ); ?>
                     </div>
-                    <div class="_divider_xs"></div>
-					<?php ABPTF_Layout::info_text( 'display_drop' ); ?>
-                </div>
+				<?php } ?>
                 <div class="_divider_xs"></div>
                 <button type="button" class="_btn_theme save_location"><span class="_mar_r_xxs">💾</span><?php echo( ! empty( $loc_id ) ? esc_html__( 'Update Location', 'abp-transportforge' ) : esc_html__( 'Save Location', 'abp-transportforge' ) ); ?></button>
 				<?php
@@ -411,30 +398,6 @@
 					<?php ABPTF_Layout::button_delete_sort(); ?>
                 </div>
 				<?php
-			}
-
-			public static function location_selection( $_location = '' ): void {
-				$all_location   = ABPTF_Function::get_option( 'abptf_location' );
-				$all_location   = is_array( $all_location ) ? $all_location : [];
-				$location_array = ! empty( $_location ) ? explode( ',', $_location ) : [];
-				if ( count( $all_location ) > 0 ) { ?>
-                    <div class="custom_checkbox _fj_end">
-                        <input type="hidden" name="abptf_location" value="<?php echo esc_attr( $_location ); ?>"/>
-						<?php foreach ( $all_location as $key => $location ) {
-							$name = $location['name'] ?? ''; ?>
-                            <div class="checkbox_item _min_100">
-                                <button type="button" class="_btn_light_info_xs <?php echo esc_attr( in_array( (string) $key, $location_array, true ) ? 'abp_active' : '' ); ?>" data-checked="<?php echo esc_attr( $key ); ?>" data-open-icon="fa-check-square" data-close-icon="fa-square">
-                                    <span data-icon class="_mar_r_xs far <?php echo esc_attr( in_array( (string) $key, $location_array, true ) ? 'far fa-check-square' : 'fa-square' ); ?>"></span><?php echo esc_html( $name ); ?>
-                                </button>
-                            </div>
-						<?php } ?>
-                        <button type="button" class="_btn_default_xs" data-target-popup="#abptf_global_popup" data-type="location"><span class="_mar_r_xs">➕</span><?php echo esc_html__( 'Add New Location', 'abp-transportforge' ); ?></button>
-                    </div>
-				<?php } else { ?>
-                    <p><?php echo esc_html( ABPTF_Layout::array_info( 'no_location' ) ); ?></p>
-                    <button type="button" class="_btn_default_xs" data-target-popup="#abptf_global_popup" data-type="location"><span class="_mar_r_xs">➕</span><?php echo esc_html__( 'Add New Location', 'abp-transportforge' ); ?></button>
-					<?php
-				}
 			}
 		}
 		new ABPTF_Location();

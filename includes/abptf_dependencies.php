@@ -16,6 +16,7 @@
 			}
 
 			public function admin_enqueue(): void {
+				$label = ABPTF_Function::label();
 				$this->global_enqueue();
 				wp_enqueue_editor();
 				wp_enqueue_media();
@@ -28,12 +29,13 @@
 				//=============================//
 				wp_enqueue_script( 'abptf_admin', ABPTF_URL . 'assets/js/abptf_admin.js', array( 'jquery' ), time(), true );
 				wp_localize_script( 'abptf_admin', 'abptf_admin_data', [
-					'ajax_url'     => admin_url( 'admin-ajax.php' ),
-					'nonce'        => wp_create_nonce( 'abptf_admin_ajax_nonce' ),
-					'icon_url'     => ABPTF_URL . 'assets/js/abptf_icons.json',
-					'related_info' => wp_json_encode( ABPTF_Function::related_info_js( get_the_ID() ) ),
-					'feature_data' => wp_json_encode( ABPTF_Function::get_option( 'abptf_feature_js' ) ),
-					'msg'          => [
+					'ajax_url'      => admin_url( 'admin-ajax.php' ),
+					'nonce'         => wp_create_nonce( 'abptf_admin_ajax_nonce' ),
+					'icon_url'      => ABPTF_URL . 'assets/js/abptf_icons.json',
+					'related_info'  => wp_json_encode( ABPTF_Function::related_info_js( get_the_ID() ) ),
+					'location_info' => wp_json_encode( ABPTF_Function::location_info_js( get_the_ID() ) ),
+					'feature_data'  => wp_json_encode( ABPTF_Feature::get_feature_js()),
+					'msg'           => [
 						'confirm_delete'       => __( 'Are you sure you want to delete this item?', 'abp-transportforge' ),
 						'confirm_ok'           => __( '1. Ok : To Remove Item .', 'abp-transportforge' ),
 						'confirm_cancel'       => __( '2. Cancel : To Cancel .', 'abp-transportforge' ),
@@ -46,12 +48,12 @@
 						'order_loading'        => __( 'Order Loading........ !', 'abp-transportforge' ),
 						'error'                => __( 'An error occurred. Please try again.', 'abp-transportforge' ),
 						'deleting'             => __( 'Deleting.............', 'abp-transportforge' ),
-						'delete_success'       => __( 'Delete Successfully.............', 'abp-transportforge' ),
+						'select_stops'         => __( 'Select Stops..', 'abp-transportforge' ),
 						'property_loading'     => __( 'Property List Loading.............', 'abp-transportforge' ),
-						'post_loading'         => __( 'Post List Loading.............', 'abp-transportforge' ),
-						'post_deleting'        => __( 'Post Permanent Deleting.........!', 'abp-transportforge' ),
-						'post_trashing'        => __( 'Post move to Trashing.........!', 'abp-transportforge' ),
-						'post_restoring'       => __( 'Post Restoring.........!', 'abp-transportforge' ),
+						'post_loading'         => $label . ' ' . __( 'List Loading.............', 'abp-transportforge' ),
+						'post_deleting'        => $label . ' ' . __( 'Permanent Deleting.........!', 'abp-transportforge' ),
+						'post_trashing'        => $label . ' ' . __( 'move to Trashing.........!', 'abp-transportforge' ),
+						'post_restoring'       => $label . ' ' . __( 'Restoring.........!', 'abp-transportforge' ),
 						'wc_install'           => __( 'Woocommerce Downloading And Installing.........!', 'abp-transportforge' ),
 						'wc_installing'        => __( 'Woocommerce  Installing.........!', 'abp-transportforge' ),
 						'wc_installed_success' => __( 'Woocommerce Downloaded And Installed successfully ..... !! ', 'abp-transportforge' ),
@@ -66,6 +68,7 @@
 				wp_localize_script( 'abptf_sp', 'abptf_config', [
 					'ajax_url' => admin_url( 'admin-ajax.php' ),
 					'nonce'    => wp_create_nonce( 'abptf_nonce' ),
+					'seat_type'  => wp_json_encode( ABPTF_Seat_Plan::get_ticket_type_js()),
 					'strings'  => abptf_sp_strings(),
 				] );
 				//=============================//
@@ -201,6 +204,7 @@
 				if ( is_admin() ) {
 					require_once ABPTF_DIR . 'admin/abptf_admin.php';
 					require_once ABPTF_DIR . 'admin/abptf_post.php';
+					require_once ABPTF_DIR . 'admin/abptf_routing.php';
 					require_once ABPTF_DIR . 'admin/abptf_dashboard.php';
 					require_once ABPTF_DIR . 'admin/abptf_orders.php';
 					require_once ABPTF_DIR . 'admin/abptf_dates.php';
@@ -354,7 +358,6 @@
 				$order_table = $wpdb->prefix . 'abptf_orders';
 				$sp_table    = $wpdb->prefix . 'abptf_sp';
 				$collate     = $wpdb->get_charset_collate();
-				// Orders Table
 				$abptf_orders = "CREATE TABLE $order_table (
 					        id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 					        order_id bigint(20) unsigned NOT NULL,
@@ -368,50 +371,48 @@
 					        dp varchar(100) DEFAULT NULL,
 					        dp_time datetime DEFAULT NULL,        
 					        pick_up varchar(100) DEFAULT NULL,
-					        drop_off varchar(100) DEFAULT NULL,
-					        category varchar(50) DEFAULT NULL,
-					        location varchar(50) DEFAULT NULL,
-					        brand varchar(50) DEFAULT NULL,        
-					        price_info longtext NOT NULL,
-					        ticket longtext NOT NULL,
+					        drop_off varchar(100) DEFAULT NULL,       
+					        price_info text NOT NULL,
+					        ticket text NOT NULL,
 					        qty int(5) NOT NULL DEFAULT 1,
-					        ticket_info longtext NOT NULL,
-					        ex_id longtext NOT NULL,
-					        ex_info longtext NOT NULL,
-					        pass_info longtext NOT NULL,
-					        checkin TINYINT(1) NOT NULL DEFAULT 0,
-					        female TINYINT(1) NOT NULL DEFAULT 0,
+					        ticket_info text NOT NULL,
+					        ex_id varchar(255) NOT NULL,
+					        ex_info text NOT NULL,
+					        pass_info text NOT NULL,
+					        checkin tinyint(1) NOT NULL DEFAULT 0,
+					        female tinyint(1) NOT NULL DEFAULT 0,
+					        book_type int(5) NOT NULL DEFAULT 1,
 					        order_status varchar(20) NOT NULL,
 					        payment_method varchar(100) DEFAULT NULL,
 					        billing_name varchar(100) DEFAULT NULL,
 					        billing_email varchar(100) DEFAULT NULL,
 					        billing_phone varchar(20) DEFAULT NULL,
 					        billing_address varchar(255) DEFAULT NULL,
-					        others longtext DEFAULT NULL,
+					        others text DEFAULT NULL,
 					        created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
 					        updated_at datetime DEFAULT NULL,
 					        PRIMARY KEY  (id),
-					        KEY order_id (order_id),
-					        KEY user_id (user_id),
-					        KEY item_id (item_id)
+					        KEY order_id  (order_id),
+					        KEY user_id  (user_id),
+					        KEY item_id  (item_id)
 					    ) $collate;";
-				$sp           = "CREATE TABLE $sp_table (
-				        id mediumint(9) unsigned NOT NULL AUTO_INCREMENT,
-				        plan_name varchar(100) DEFAULT NULL,
-				        rows  mediumint(4)  NOT NULL DEFAULT 0,
-       					 cols  mediumint(4)  NOT NULL DEFAULT 0,
-       					 cell_width_default  SMALLINT(4)  NOT NULL DEFAULT 44,
-       					 cell_height_default SMALLINT(4)  NOT NULL DEFAULT 44,
-       					 seat_count mediumint(4)  NOT NULL DEFAULT 0,
-				        groups_json    TEXT                  DEFAULT NULL,
-				        seat_labels_json  TEXT                  DEFAULT NULL,
-				        plan_bg_image  LONGTEXT              DEFAULT NULL,
-				        grid_json      LONGTEXT     NOT NULL,
-				        created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-				        updated_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
-				        ON UPDATE CURRENT_TIMESTAMP,
-        				PRIMARY KEY    (id)
-				    ) $collate;";
+				// Seat Plan Table
+				$sp = "CREATE TABLE $sp_table (
+					        id mediumint unsigned NOT NULL AUTO_INCREMENT,
+					        plan_name varchar(100) DEFAULT NULL,
+					        plan_rows mediumint NOT NULL DEFAULT 0,
+					        plan_cols mediumint NOT NULL DEFAULT 0,
+					        cell_width smallint NOT NULL DEFAULT 44,
+					        cell_height smallint NOT NULL DEFAULT 44,
+					        seat_count mediumint NOT NULL DEFAULT 0,
+					        groups_json text DEFAULT NULL,
+					        seat_labels_json text DEFAULT NULL,
+					        plan_bg_image text DEFAULT NULL,
+					        grid_json text NOT NULL,
+					        created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+					        updated_at datetime DEFAULT NULL,
+					        PRIMARY KEY  (id)
+					    ) $collate;";
 				if ( ! function_exists( 'dbDelta' ) ) {
 					require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 				}

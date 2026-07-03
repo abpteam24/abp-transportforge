@@ -209,11 +209,11 @@
 			}
 
 			public static function info_text( $key = '', $data = '' ): void {
-				$data = empty( $data ) ? ABPTF_Layout::array_info( $key ) : $data;
+				$data = empty( $data ) ? ABPTF_Status::array_info( $key ) : $data;
 				if ( $data ) {
 					?>
                     <div class="info_text load_more">
-                        <span class="load_more_content">ℹ️ &nbsp;<?php echo wp_kses_post( $data ); ?></span>
+                        ℹ️ &nbsp;<?php echo wp_kses_post( $data ); ?>
                         <span class="load_more_action" data-less="<?php esc_html_e( '.... Less ', 'abp-transportforge' ); ?>" data-more="<?php esc_html_e( '.... More', 'abp-transportforge' ); ?>"><?php esc_html_e( '.... More', 'abp-transportforge' ); ?></span>
                     </div>
 					<?php
@@ -224,7 +224,7 @@
 				if ( $data ) {
 					?>
                     <div class="load_more">
-                        <span class="load_more_content"><?php echo wp_kses_post( $data ); ?></span>
+						<?php echo wp_kses_post( $data ); ?>
                         <span class="load_more_action" data-less="<?php esc_html_e( '.... Less ', 'abp-transportforge' ); ?>" data-more="<?php esc_html_e( '.... More', 'abp-transportforge' ); ?>"><?php esc_html_e( '.... More', 'abp-transportforge' ); ?></span>
                     </div>
 					<?php
@@ -232,14 +232,14 @@
 			}
 
 			public static function layout_warning_info( $key ): void {
-				$data = ABPTF_Layout::array_info( $key );
+				$data = ABPTF_Status::array_info( $key );
 				if ( $data ) {
 					echo '<div class="_section_bg_warning_mar_zero"><h4 class="_abp_text_center_color_white">' . esc_html( $data ) . '</h4></div>';
 				}
 			}
 
 			public static function layout_warning_info_xs( $key ): void {
-				$data = ABPTF_Layout::array_info( $key );
+				$data = ABPTF_Status::array_info( $key );
 				if ( $data ) {
 					echo '<div class="_abp_text_center_color_white_bg_warning_padding_xxs_fs_label">' . esc_html( $data ) . '</div>';
 				}
@@ -271,7 +271,7 @@
 					if ( $image ) {
 						ABPTF_Layout::image( '', $image );
 					} else { ?>
-                        <i class="<?php echo esc_attr( $icon . ' ' . $class ); ?>"><?php echo esc_html( $emoji ); ?></i>
+                        <span class="<?php echo esc_attr( $icon . ' ' . $class ); ?>"><?php echo esc_html( $emoji ); ?></span>
 					<?php }
 				}
 			}
@@ -623,8 +623,8 @@
 				$rules = [
 					'weekend'            => __( 'Weekend', 'abp-transportforge' ),
 					'specific_off_dates' => __( 'Specific Off Dates', 'abp-transportforge' ),
-					'off_date_range'     => __( 'Off Dates Range', 'abp-transportforge' ),
 					'special_on_dates'   => __( 'Special On Dates', 'abp-transportforge' ),
+					'off_date_range'     => __( 'Off Dates Range', 'abp-transportforge' ),
 				];
 
 				return apply_filters( 'abptf_filter_rent_rule', $rules );
@@ -720,221 +720,6 @@
 					'D d M , yy' => date_i18n( 'D j M , Y', strtotime( $current_date ) ),
 					'M d , yy'   => date_i18n( 'M  j, Y', strtotime( $current_date ) ),
 					'D M d , yy' => date_i18n( 'D M  j, Y', strtotime( $current_date ) ),
-				];
-			}
-
-			public static function array_info( $key ) {
-				$current_date = current_time( 'Y-m-d H:i' );
-				$des          = array(
-					'sale_continue'       => __( 'Note: This switch indicate Transport Ticket sale close/continue . You can  sale close/continue  by this switch. By default sale will be  continue', 'abp-transportforge' ),
-					'abptf_template'      => __( 'Note: Here You can change your details page template.', 'abp-transportforge' ),
-					'post_sku'            => __( 'Note: Here you can add an SKU for this post. You can also show or hide it on the frontend by turning the switch On or Off.', 'abp-transportforge' ),
-					'post_icon'           => __( 'Note: Set a custom icon or emoji for this post. The selected icon/emoji will be displayed alongside the post title wherever the title appears across the website, helping it stand out and improve visual recognition.', 'abp-transportforge' ),
-					'sub_title'           => __( 'Note: Add a Sub-title to enable the Post sub-tile. Leave this blank if you dont want to show any Sub-title information for this Post.', 'abp-transportforge' ),
-					'post_description'    => __( 'Note: Add short description about this Transport . Leave this blank if you dont want to show any  description for this Transport.', 'abp-transportforge' ),
-					'display_organizer'   => __( 'Note : This switch indicate Transport Organizer . You can also show or hide it on the frontend by turning the switch On or Off.', 'abp-transportforge' ),
-					'display_brand'       => __( 'Note : This switch indicate Transport Brand name . You can also show or hide it on the frontend by turning the switch On or Off.', 'abp-transportforge' ),
-					'display_category'    => __( 'Note : This switch indicate Transport Category . You can also show or hide it on the frontend by turning the switch On or Off.', 'abp-transportforge' ),
-					'related_item'        => __( 'Note: Select related items to display on the details page. Leave this option empty or disabled if you do not want to show related items.', 'abp-transportforge' ),
-					'post_feature'        => __( 'Note: If you want to add feature for this Transport, you can add Here. These feature will be show with this Transport . You may leave this section empty if you do not want to show frontend. ', 'abp-transportforge' ),
-					'abptf_sliders'       => __( 'Note: If you want to add an image gallery for this transport, you can upload images below.  You may leave this section empty if you do not want to show images. ', 'abp-transportforge' ),
-					//=============================//
-					'cat_name'            => __( 'Note: Please enter a category name — the field cannot be empty. ', 'abp-transportforge' ),
-					'cat_slug'            => __( 'Note: Category slug is optional — leave it blank to auto-generate from the name. ', 'abp-transportforge' ),
-					'cat_des'             => __( 'Note: Category description is optional — you can add details to better explain this category. ', 'abp-transportforge' ),
-					'org_name'            => __( 'Note: Please enter a Organizer name — the field cannot be empty. ', 'abp-transportforge' ),
-					'org_slug'            => __( 'Note: Organizer slug is optional — leave it blank to auto-generate from the name. ', 'abp-transportforge' ),
-					'org_des'             => __( 'Note: Organizer description is optional — you can add details to better explain this Organizer. ', 'abp-transportforge' ),
-					'loc_name'            => __( 'Note: Please enter a Location name — the field cannot be empty. ', 'abp-transportforge' ),
-					'loc_slug'            => __( 'Note: Location slug is optional — leave it blank to auto-generate from the name. ', 'abp-transportforge' ),
-					'loc_des'             => __( 'Note: Location Address is optional — you can add details to better explain this Location Full  Address. ', 'abp-transportforge' ),
-					'feature_name'        => __( 'Note: Please enter a Feature Label — the field cannot be empty. ', 'abp-transportforge' ),
-					'feature_slug'        => __( 'Note: Feature slug is optional — leave it blank to auto-generate from the name. ', 'abp-transportforge' ),
-					'feature_des'         => __( 'Note: Please enter a Feature Value  — the field cannot be empty. ', 'abp-transportforge' ),
-					//=============================//
-					'date_format'         => __( 'Note:  If you want to change the Date  Format, simply choose a different format. The default date is: ', 'abp-transportforge' ) . ' ' . date_i18n( 'D j M , Y', strtotime( $current_date ) ),
-					'time_format'         => __( 'Note : If you want to change the Time Format, simply choose a different format. The default Time Format is: ', 'abp-transportforge' ) . ' ' . date_i18n( get_option( 'time_format' ), strtotime( $current_date ) ),
-					'sale_close_before'   => __( 'Note:  Enter the time in minutes to close ticket sales before the transport starts. If not specified, it will default to 0 (e.g. 1 hour equals 60 minutes). ', 'abp-transportforge' ),
-					'advance_date_number' => __( 'Note: Kindly provide the number of days in advance for booking. By default, the advance booking period is set to 28 days.(optional) ', 'abp-transportforge' ),
-					'active_global_dates' => __( 'Note: Keep this switch ON to apply the global date settings.Switch it OFF if you want to set special date rules for this transport.Date configuration options will open when turned OFF. ', 'abp-transportforge' ),
-					'date_type'           => __( 'Note: Please Select your Transport operational date type. Default operational date will be Periodic', 'abp-transportforge' ),
-					'specific_dates'      => __( 'Note: Please add your Transport operational Specific Date lists  .', 'abp-transportforge' ),
-					'operation_time'      => __( 'Note: Operation Time is required. If you do not specify any operation time, it will automatically be set to 12:00 AM (00:00). You can add multiple operation times for the same transport within a single day if needed. However, at least one operation time is required.', 'abp-transportforge' ),
-					'periodic_start_date' => __( 'Note: Please add your Transport Launching Date otherwise it will be start today ', 'abp-transportforge' ),
-					'periodic_end_date'   => __( 'Note: Please add your Transport Terminate  Date otherwise it will be Continuously running periodically', 'abp-transportforge' ),
-					'periodic_after'      => __( 'Note: Please add your periodically after days. if  your Transport operation day everyday this will be one(1).(optional)', 'abp-transportforge' ),
-					'date_rule'           => __( 'Note: Enable this checkbox to configure special on/off date  settings. This option is optional. If you set a date/time in the special “On” date, that date will remain active even if it falls within an “Off” date range or on weekends.', 'abp-transportforge' ),
-					'special_on_dates'    => __( 'Note: If you add any date  in Special On Dates, it will always remain active—even if that date falls within an off date range or on weekends.', 'abp-transportforge' ),
-					'weekend'             => __( 'Note: Please select your weekend.Default all days open(optional)', 'abp-transportforge' ),
-					'day_wise_time'       => __( 'Note:Add Day-wise Time if your transport operates on different schedules throughout the week. You can assign multiple departure times for each day, and only the configured times for the selected day will be available to passengers. ', 'abp-transportforge' ),
-					'specific_off_dates'  => __( 'Note: please add your specific Operation off dates.(optional)', 'abp-transportforge' ),
-					'date_wise_time'      => __( 'Note: Set the transport operation time for specific dates. A date will only be saved if it has at least one operation time. If a date is not saved, the regular day-wise schedule or the default operation time will be applied. You can add multiple operation times for the same date.(optional)', 'abp-transportforge' ),
-					'off_date_range'      => __( 'Note: If you have off days between two dates which can add here.(optional)', 'abp-transportforge' ),
-					'abptf_dates'         => __( 'Note: Set a global date configuration for your Transport  that can be reused across all posts, with options to import and customize anytime.', 'abp-transportforge' ),
-					//=============================//
-					'qty_reserve_min_max'         => __( 'Note: Set the total stock quantity available for sale. This field is required to save the transport. You can also set reserve, minimum, and maximum quantity limits for customer bookings. Reserve quantity keeps specific items unavailable, minimum quantity defaults to 1, and maximum quantity will follow the available stock if left empty.', 'abp-transportforge' ),
-					//=============================//
-					'_tax_class'                  => __( 'Note: If you want to add any new tax class , Please go to WooCommerce ->configuration->Tax Area', 'abp-transportforge' ),
-					'enable_tax_msg'              => __( 'Note: Your Woo-commerce Tax setting already disable. If you want to enable tax please enable woo-commerce tax.', 'abp-transportforge' ),
-					//=============================//
-					'display_additional_services' => __( 'Note: If you want sale additional product/equipment with this  transport then active this button and add additional service. Additional item not depends on  operation time.', 'abp-transportforge' ),
-					'additional_services'         => __( 'Note: Add extra services for products/equipment with your transport—import or set per Post (also usable globally); stock applies per Post, empty quantity = unlimited, empty max qty = no limit, empty/Zero price = free.', 'abp-transportforge' ),
-					'active_global_additional'    => __( 'Note: Keep this switch ON to apply the global additional settings.Switch it OFF if you want to set special additional rules for this transport.additional configuration options will open when turned OFF. ', 'abp-transportforge' ),
-					//=============================//
-					'client_form_option'          => __( 'Use comma( , ) to separate option.', 'abp-transportforge' ),
-					'display_client_form'         => __( 'Note: If you want to get Client information then active this button and add form/import global form or use global form as a client form', 'abp-transportforge' ),
-					'active_global_form'          => __( 'Note: Keep this switch ON to apply the global Client Form settings.Switch it OFF if you want to set special  Client Form rules for this transport. Client Form configuration options will open when turned OFF. ', 'abp-transportforge' ),
-					'global_client_forms'         => __( 'Note: This is a flexibility global form system. Once you design the structure here, it serves as a global form. You can effortlessly import this form into any transport or use this setting at any transport,', 'abp-transportforge' ),
-					//=============================//
-					'abptf_tc'                    => __( 'You can set all transport-related Term & Condition here and use them globally across all transport. You can also import these Term & Condition into any individual transport and customize them as needed.', 'abp-transportforge' ),
-					'tc_item'                     => __( 'Use the editor to customize and design your Terms & Conditions as you prefer. The content and formatting you create here will be displayed the same way on the frontend.', 'abp-transportforge' ),
-					'display_tc'                  => __( 'Use this switch to control whether the Term & Condition is displayed on the frontend. Turn the switch ON to show the Term & Condition, and OFF to hide it. By default, this option is set to ON.', 'abp-transportforge' ),
-					'active_global_tc'            => __( 'Enable this switch to apply the global Term & Condition to this post. If you want to add custom Term & Condition specifically for this post, turn the switch OFF and add your custom Term & Condition below.You can also use the Import button to bring in global Term & Condition, which you can then edit or delete based on your needs.', 'abp-transportforge' ),
-					//=============================//
-					'abptf_faqs'                  => __( 'You can set all transport-related FAQs here and use them globally across all transports. You can also import these FAQs into any individual transport and customize them as needed.', 'abp-transportforge' ),
-					'faq_item'                    => __( 'Both the Title and Description fields are required. If either field is left empty, this FAQ item will not be displayed on the frontend.', 'abp-transportforge' ),
-					'display_faq'                 => __( 'Use this switch to control whether the FAQ is displayed on the frontend. Turn the switch ON to show the FAQ, and OFF to hide it. By default, this option is set to ON.', 'abp-transportforge' ),
-					'active_global_faq'           => __( 'Enable this switch to apply the global FAQ to this post. If you want to add custom FAQs specifically for this post, turn the switch OFF and add your custom FAQs below.You can also use the Import button to bring in global FAQs, which you can then edit or delete based on your needs.', 'abp-transportforge' ),
-					//=============================//
-					'search_get_wrong_data_info'  => __( 'Somethings went Wrong ! Please Try again', 'abp-transportforge' ),
-					'sale_close_msg'              => __( 'This transport sale close shortly. please try another transport.', 'abp-transportforge' ),
-					'not_date'                    => __( 'No Dates Found !', 'abp-transportforge' ),
-					'not_match'                   => __( 'No Results Found !', 'abp-transportforge' ),
-					'not_found'                   => __( 'No Post Found !', 'abp-transportforge' ),
-					'not_post_found'              => __( 'No Post Found !', 'abp-transportforge' ),
-					'not_transport_found'         => __( 'No transport Found !', 'abp-transportforge' ),
-					'no_category'                 => __( 'No Category Found ! Please add Category to use Category feature', 'abp-transportforge' ),
-					'no_organizer'                => __( 'No Organizer Found ! Please add Organizer to use Organizer feature', 'abp-transportforge' ),
-					'no_brand'                    => __( 'No Brand Found ! Please add Brand to use Brand feature', 'abp-transportforge' ),
-					'no_location'                 => __( 'No Location Found ! Please add Location to use Location feature', 'abp-transportforge' ),
-					'no_feature'                  => __( 'No Feature Found ! Please add Feature to use Feature', 'abp-transportforge' ),
-					'transport_not_available'     => __( 'The transport is not available for the selected date and time. Please choose a different schedule.', 'abp-transportforge' ),
-					//=============================//
-					'must_wc'                     => __( 'TransportForge is entirely dependent on the WooCommerce plugin. Please install and activate the WooCommerce plugin otherwise the plugin will not work. Installing this tool may take some time', 'abp-transportforge' ),
-					//=============================//
-					'display_pickup'              => __( 'You can add multiple pickup points for a single location. For each pickup point, set the travel time relative to the main location. Use a negative value (in minutes) if the pickup point is before the main location, or a positive value (in minutes) if it is after the main location. For example, use -15 for 15 minutes before the main location, or 20 for 20 minutes after it.', 'abp-transportforge' ),
-					'display_drop'                => __( 'You can add multiple drop-off points for a single location. For each drop-off point, set the travel time relative to the main location. Use a negative value (in minutes) if the drop-off point is before the main location, or a positive value (in minutes) if it is after the main location. For example, use -10 for 10 minutes before the main location, or 25 for 25 minutes after it.', 'abp-transportforge' ),
-					//=============================//
-					'sign_up_msg'                 => __( 'Please Login your account to Download/View ticket !', 'abp-transportforge' ),
-					'no_permit_msg'               => __( 'You are not permitted to Download/View this ticket !', 'abp-transportforge' ),
-					'wrong_msg_id'                => __( 'We see, this id are not valid !', 'abp-transportforge' ),
-					'no_order_found'              => __( 'Sorry ! We can not find any Order in your criteria.', 'abp-transportforge' ),
-					//''          => __( '', 'abp-transportforge' ),
-				);
-				$des          = apply_filters( 'abptf_info_array_filter', $des );
-
-				return $des[ $key ] ?? '';
-			}
-
-			public static function static_form( $key = '' ): array {
-				$form['pass_name']    = [ 'type' => 'text', 'required' => 'on', 'label' => __( 'First Name', 'abp-transportforge' ) ];
-				$form['pass_name_2']  = [ 'type' => 'text', 'required' => 'on', 'label' => __( 'Last Name', 'abp-transportforge' ) ];
-				$form['pass_email']   = [ 'type' => 'email', 'required' => 'on', 'label' => __( 'E-Mail', 'abp-transportforge' ) ];
-				$form['pass_phone']   = [ 'type' => 'text', 'required' => 'on', 'label' => __( 'Phone', 'abp-transportforge' ) ];
-				$form['pass_gender']  = [ 'type' => 'select', 'required' => 'off', 'label' => __( 'Gender', 'abp-transportforge' ), 'option' => 'male,female' ];
-				$form['pass_date']    = [ 'type' => 'date', 'required' => 'off', 'label' => __( 'Date of Birth', 'abp-transportforge' ) ];
-				$form['pass_address'] = [ 'type' => 'textarea', 'required' => 'off', 'label' => __( 'Address', 'abp-transportforge' ) ];
-				if ( ! is_string( $key ) && ! is_int( $key ) ) {
-					return $form;
-				}
-				if ( $key === '' ) {
-					return $form;
-				}
-
-				return is_array( $form[ $key ] ?? null ) ? $form[ $key ] : [];
-			}
-
-			public static function static_additional(): array {
-				return [
-					'additional_service_1' => [ 'icon' => 'fas fa-helmet-un', 'name' => 'Helmet', 'qty' => 50, 'max_qty' => 1, 'price' => 0, 'returnable' => 'yes', 'description' => '1x Safety Helmet per order. Keep your head protected at no extra cost. Your safety is our priority!', ],
-					'additional_service_2' => [ 'icon' => 'fas fa-suitcase', 'name' => 'Storage', 'qty' => 30, 'max_qty' => 3, 'price' => 2.99, 'returnable' => 'no', 'description' => 'Optional baggage support is available as a paid service to help carry your essentials with ease.', ],
-					'additional_service_3' => [ 'icon' => 'fas fa-user-tie', 'name' => 'Tie', 'qty' => 100, 'price' => 1.00, 'returnable' => 'no', 'description' => 'Multiple color available', ],
-					'additional_service_4' => [ 'icon' => 'fas fa-shoe-prints', 'name' => 'Shoes', 'qty' => 100, 'price' => 1.00, 'returnable' => 'yes', 'description' => 'Multiple Size available', ]
-				];
-			}
-
-			public static function static_feature(): array {
-				return [
-					'fec_id_1'  => [ 'icon' => '🚌', 'label' => 'Bus' ],
-					'fec_id_2'  => [ 'icon' => '🚍', 'label' => 'Coach Bus' ],
-					'fec_id_3'  => [ 'icon' => '🚐', 'label' => 'Minibus' ],
-					'fec_id_4'  => [ 'icon' => '🏫', 'label' => 'School Bus' ],
-					'fec_id_5'  => [ 'icon' => '🏙️', 'label' => 'City Bus' ],
-					'fec_id_6'  => [ 'icon' => '🏨', 'label' => 'Shuttle Bus' ],
-					'fec_id_7'  => [ 'icon' => '🚆', 'label' => 'Train' ],
-					'fec_id_8'  => [ 'icon' => '🚇', 'label' => 'Metro' ],
-					'fec_id_9'  => [ 'icon' => '🚉', 'label' => 'Subway' ],
-					'fec_id_10' => [ 'icon' => '🚊', 'label' => 'Tram' ],
-					'fec_id_11' => [ 'icon' => '🚝', 'label' => 'Monorail' ],
-					'fec_id_12' => [ 'icon' => '🚈', 'label' => 'Light Rail' ],
-					'fec_id_13' => [ 'icon' => '🚄', 'label' => 'High Speed Train' ],
-					'fec_id_14' => [ 'icon' => '🚅', 'label' => 'Bullet Train' ],
-					'fec_id_15' => [ 'icon' => '🚞', 'label' => 'Mountain Railway' ],
-					'fec_id_16' => [ 'icon' => '🚠', 'label' => 'Cable Car' ],
-					'fec_id_17' => [ 'icon' => '✈️', 'label' => 'Flight' ],
-					'fec_id_18' => [ 'icon' => '🏠', 'label' => 'Domestic Flight' ],
-					'fec_id_19' => [ 'icon' => '🌍', 'label' => 'International Flight' ],
-					'fec_id_20' => [ 'icon' => '🚁', 'label' => 'Helicopter' ],
-					'fec_id_21' => [ 'icon' => '🛩️', 'label' => 'Air Charter' ],
-					'fec_id_22' => [ 'icon' => '⛴️', 'label' => 'Ferry' ],
-					'fec_id_23' => [ 'icon' => '🚢', 'label' => 'Passenger Ship' ],
-					'fec_id_24' => [ 'icon' => '🛳️', 'label' => 'Cruise Ship' ],
-					'fec_id_25' => [ 'icon' => '🛥️', 'label' => 'Water Taxi' ],
-					'fec_id_26' => [ 'icon' => '🚤', 'label' => 'Speed Boat' ],
-					'fec_id_27' => [ 'icon' => '🛶', 'label' => 'River Boat' ],
-					'fec_id_28' => [ 'icon' => '🚖', 'label' => 'Taxi' ],
-					'fec_id_29' => [ 'icon' => '🚕', 'label' => 'Cab Service' ],
-					'fec_id_30' => [ 'icon' => '🚘', 'label' => 'Ride Sharing' ],
-					'fec_id_31' => [ 'icon' => '🚗', 'label' => 'Car Rental' ],
-					'fec_id_32' => [ 'icon' => '🏍️', 'label' => 'Motorbike Taxi' ],
-					'fec_id_33' => [ 'icon' => '🚲', 'label' => 'Bicycle Rental' ],
-					'fec_id_34' => [ 'icon' => '🛺', 'label' => 'Auto Rickshaw' ],
-					'fec_id_35' => [ 'icon' => '🚜', 'label' => 'Van Service' ],
-					'fec_id_36' => [ 'icon' => '🎫', 'label' => 'Online Ticket Booking' ],
-					'fec_id_37' => [ 'icon' => '🎟️', 'label' => 'E-Ticket' ],
-					'fec_id_38' => [ 'icon' => '📱', 'label' => 'Mobile Ticket' ],
-					'fec_id_39' => [ 'icon' => '🔳', 'label' => 'QR Code Ticket' ],
-					'fec_id_40' => [ 'icon' => '💺', 'label' => 'Seat Reservation' ],
-					'fec_id_41' => [ 'icon' => '🪑', 'label' => 'Seat Selection' ],
-					'fec_id_42' => [ 'icon' => '⭐', 'label' => 'VIP Seat' ],
-					'fec_id_43' => [ 'icon' => '🛏️', 'label' => 'Sleeper Seat' ],
-					'fec_id_44' => [ 'icon' => '👨‍👩‍👧‍👦', 'label' => 'Family Seat' ],
-					'fec_id_45' => [ 'icon' => '👥', 'label' => 'Group Booking' ],
-					'fec_id_46' => [ 'icon' => '🔄', 'label' => 'Round Trip Booking' ],
-					'fec_id_47' => [ 'icon' => '🌐', 'label' => 'Multi City Booking' ],
-					'fec_id_48' => [ 'icon' => '⚡', 'label' => 'Instant Booking' ],
-					'fec_id_49' => [ 'icon' => '❌', 'label' => 'Ticket Cancellation' ],
-					'fec_id_50' => [ 'icon' => '💰', 'label' => 'Ticket Refund' ],
-					'fec_id_51' => [ 'icon' => '📍', 'label' => 'Route Tracking' ],
-					'fec_id_52' => [ 'icon' => '🛰️', 'label' => 'GPS Tracking' ],
-					'fec_id_53' => [ 'icon' => '📡', 'label' => 'Live Location' ],
-					'fec_id_54' => [ 'icon' => '🗺️', 'label' => 'Route Management' ],
-					'fec_id_55' => [ 'icon' => '📅', 'label' => 'Trip Scheduling' ],
-					'fec_id_56' => [ 'icon' => '🌙', 'label' => 'Night Service' ],
-					'fec_id_57' => [ 'icon' => '🚀', 'label' => 'Express Service' ],
-					'fec_id_58' => [ 'icon' => '🌎', 'label' => 'International Routes' ],
-					'fec_id_59' => [ 'icon' => '💳', 'label' => 'Online Payment' ],
-					'fec_id_60' => [ 'icon' => '💵', 'label' => 'Cash Payment' ],
-					'fec_id_61' => [ 'icon' => '💳', 'label' => 'Card Payment' ],
-					'fec_id_62' => [ 'icon' => '📲', 'label' => 'Mobile Banking' ],
-					'fec_id_63' => [ 'icon' => '🧾', 'label' => 'Invoice Support' ],
-					'fec_id_64' => [ 'icon' => '❄️', 'label' => 'Air Conditioning' ],
-					'fec_id_65' => [ 'icon' => '📶', 'label' => 'WiFi' ],
-					'fec_id_66' => [ 'icon' => '🔌', 'label' => 'USB Charging' ],
-					'fec_id_67' => [ 'icon' => '🔋', 'label' => 'Power Outlet' ],
-					'fec_id_68' => [ 'icon' => '🪑', 'label' => 'Reclining Seats' ],
-					'fec_id_69' => [ 'icon' => '🎬', 'label' => 'Entertainment System' ],
-					'fec_id_70' => [ 'icon' => '💡', 'label' => 'Reading Light' ],
-					'fec_id_71' => [ 'icon' => '🥤', 'label' => 'Refreshments' ],
-					'fec_id_72' => [ 'icon' => '🚻', 'label' => 'Toilet Facility' ],
-					'fec_id_73' => [ 'icon' => '🧳', 'label' => 'Luggage Storage' ],
-					'fec_id_74' => [ 'icon' => '♿', 'label' => 'Wheelchair Access' ],
-					'fec_id_75' => [ 'icon' => '👴', 'label' => 'Priority Seating' ],
-					'fec_id_76' => [ 'icon' => '👶', 'label' => 'Child Friendly' ],
-					'fec_id_77' => [ 'icon' => '🐕', 'label' => 'Pet Friendly' ],
-					'fec_id_78' => [ 'icon' => '🎥', 'label' => 'CCTV Security' ],
-					'fec_id_79' => [ 'icon' => '🚪', 'label' => 'Emergency Exit' ],
-					'fec_id_80' => [ 'icon' => '⛑️', 'label' => 'First Aid Kit' ],
 				];
 			}
 
@@ -1110,24 +895,22 @@
 					}
 					?>
                     <div class="item_spec load_more">
-                        <div class="load_more_content ">
-							<?php
-								foreach ( $feature_ids as $fec_id ) {
-									$feature = $abptf_feature[ $fec_id ] ?? null;
-									if ( ! is_array( $feature ) ) {
-										continue;
-									}
-									$label = $feature['label'] ?? '';
-									$value = $feature['value'] ?? '';
-									$icon  = $feature['icon'] ?? '';
-									if ( $value !== '' ) {
-										echo '<span class="spec_badge" title="' . esc_attr( $label ) . '">';
-										ABPTF_Layout::image_icon( $icon );
-										echo esc_html( $label . ' - ' . $value );
-										echo '</span>';
-									}
-								} ?>
-                        </div>
+						<?php
+							foreach ( $feature_ids as $fec_id ) {
+								$feature = $abptf_feature[ $fec_id ] ?? null;
+								if ( ! is_array( $feature ) ) {
+									continue;
+								}
+								$label = $feature['label'] ?? '';
+								$value = $feature['value'] ?? '';
+								$icon  = $feature['icon'] ?? '';
+								if ( $value !== '' ) {
+									echo '<span class="spec_badge" title="' . esc_attr( $label ) . '">';
+									ABPTF_Layout::image_icon( $icon );
+									echo esc_html( $label . ' - ' . $value );
+									echo '</span>';
+								}
+							} ?>
                         <span class="load_more_action" data-less="<?php esc_html_e( '....Less ', 'abp-transportforge' ); ?>" data-more="<?php esc_html_e( '.... More', 'abp-transportforge' ); ?>"><?php esc_html_e( '.... More', 'abp-transportforge' ); ?></span>
                     </div>
 					<?php

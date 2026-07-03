@@ -220,7 +220,7 @@
                                     <th class="_text_capitalize"><?php echo esc_html( $booking_list['payment_method'] ?? '' ); ?></th>
                                     <td>
                                         <div class="info_text load_more">
-                                            <div class="load_more_content"><?php ABPTF_Layout::billing_info( $booking_list ); ?></div>
+                                            <?php ABPTF_Layout::billing_info( $booking_list ); ?>
                                             <span class="load_more_action" data-less="<?php esc_attr_e( '....Less ', 'abp-transportforge' ); ?>" data-more="<?php esc_attr_e( '....More', 'abp-transportforge' ); ?>"><?php esc_html_e( '.... More', 'abp-transportforge' ); ?></span>
                                         </div>
                                     </td>
@@ -228,7 +228,7 @@
                                         <td>
 											<?php if ( ! empty( $passenger_infos ) ) { ?>
                                                 <div class="info_text load_more">
-                                                    <div class="load_more_content"><?php ABPTF_Layout::client_info( $passenger_infos ); ?></div>
+                                                    <?php ABPTF_Layout::client_info( $passenger_infos ); ?>
                                                     <span class="load_more_action" data-less="<?php esc_html_e( '....Less ', 'abp-transportforge' ); ?>" data-more="<?php esc_html_e( '.... More', 'abp-transportforge' ); ?>"><?php esc_html_e( '.... More', 'abp-transportforge' ); ?></span>
                                                 </div>
 											<?php } ?>
@@ -262,10 +262,10 @@
 			}
 			public function load_order_list(): void {
 				if ( ! check_ajax_referer( 'abptf_admin_ajax_nonce', 'nonce', false ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ),'type'=>'warn'  ], 403 );
 				}
 				if ( ! current_user_can( 'manage_options' ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ),'type'=>'warn'  ], 403 );
 				}
 				ob_start();
 				$filter_args              = isset( $_POST ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) : [];
@@ -277,14 +277,14 @@
 				}
 				$this->order_lists( $filter_args );
 				$html = ob_get_clean();
-				wp_send_json_success( [ 'html' => $html, 'msg' => esc_html__( 'Order Loaded Successfully !', 'abp-transportforge' ) ] );
+				wp_send_json_success( [ 'html' => $html, 'msg' => esc_html__( 'Order Loaded Successfully !', 'abp-transportforge' ) , 'type' => 'success'] );
 			}
 			public function item_cancel(): void {
 				if ( ! check_ajax_referer( 'abptf_admin_ajax_nonce', 'nonce', false ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ), 'type' => 'warn'  ], 403 );
 				}
 				if ( ! current_user_can( 'manage_options' ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ), 'type' => 'warn'  ], 403 );
 				}
 				$item_id = isset( $_POST['item_id'] ) ? sanitize_text_field( wp_unslash( $_POST['item_id'] ) ) : '';
 				if ( ! empty( $item_id ) ) {
@@ -309,9 +309,9 @@
 							$wpdb->update( $table_name, $data, $where, [ '%s', '%s', '%s' ], [ '%d' ] );
 						}
 					}
-					wp_send_json_success( [ 'html' => '', 'msg' => esc_html__( 'Deleted Successfully !', 'abp-transportforge' ) ] );
+					wp_send_json_success( [ 'html' => '', 'msg' => esc_html__( 'Deleted Successfully !', 'abp-transportforge' ), 'type' => 'success' ] );
 				}
-				wp_send_json_error( [ 'html' => '', 'msg' => esc_html__( 'Something Error Occurred !', 'abp-transportforge' ) ] );
+				wp_send_json_error( [ 'html' => '', 'msg' => esc_html__( 'Something Error Occurred !', 'abp-transportforge' ), 'type' => 'warn'  ] );
 			}
 		}
 		new ABPTF_Orders();

@@ -177,7 +177,7 @@
                             <div class="_panel_head">
                                 <ul class="_abp tab_lists">
                                     <li data-tabs-target="#abptf_general"><span class="fas fa-rainbow"></span><?php esc_html_e( 'General', 'abp-transportforge' ); ?></li>
-                                    <li data-tabs-target="#abptf_equipment_price"><span>🏠</span><?php esc_html_e( 'Properties and Price', 'abp-transportforge' ); ?></li>
+                                    <li data-tabs-target="#abptf_routing"><span class="fas fa-route"></span><?php esc_html_e( 'Route Configuration', 'abp-transportforge' ); ?></li>
                                     <li data-tabs-target="#abptf_dates"><span>🗓️</span><?php esc_html_e( 'Date & Time', 'abp-transportforge' ); ?></li>
 									<?php if ( ABPTF_Function::on_off( 'additional_info' ) ) { ?>
                                         <li data-tabs-target="#abptf_additional_service"><span>💰</span><?php esc_html_e( 'Additional services', 'abp-transportforge' ); ?></li>
@@ -207,6 +207,7 @@
 				?>
                 <div class="tab_item" data-tabs="#abptf_general">
                     <h4 class="_abp_color_theme"><?php esc_html_e( 'General Configuration', 'abp-transportforge' ); ?></h4>
+					<?php ABPTF_Layout::info_text( 'general_config' ); ?>
                     <div class="_divider_xs"></div>
                     <div class="group_setting">
                         <div class="setting_item">
@@ -386,14 +387,59 @@
 				}
 				if ( get_post_type( $post_id ) == ABPTF_Function::get_cpt() ) {
 					//$post_int            = fn( $key, $default = 0 ) => isset( $_POST[ $key ] ) ? absint( $_POST[ $key ] ) : $default;
-					$post_val      = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : $default;
-					$post_textarea = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ $key ] ) ) : $default;
-					$post_html     = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? wp_kses_post( wp_unslash( $_POST[ $key ] ) ) : $default;
-					//$post_int_array = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'absint', wp_unslash( $_POST[ $key ] ) ) : [];
-					$post_array = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST[ $key ] ) ) : [];
+					$post_val       = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : $default;
+					$post_textarea  = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ $key ] ) ) : $default;
+					$post_html      = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? wp_kses_post( wp_unslash( $_POST[ $key ] ) ) : $default;
+					$post_int_array = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'absint', wp_unslash( $_POST[ $key ] ) ) : [];
+					$post_array     = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST[ $key ] ) ) : [];
 					//$post_textarea_array = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'sanitize_textarea_field', wp_unslash( $_POST[ $key ] ) ) : [];
 					//$post_html_array     = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'wp_kses_post', wp_unslash( $_POST[ $key ] ) ) : [];
 					//$format_date         = fn( $date ) => $date ? gmdate( 'Y-m-d', strtotime( $date ) ) : '';
+					$route_infos     = array();
+					$route_direction = [];
+					$bp              = [];
+					$dp              = [];
+					$stops           = $post_int_array( 'stop_name' );
+					$types           = $post_array( 'stop_type' );
+					$display_pickup  = $post_array( 'display_pickup' );
+					$display_drop    = $post_array( 'display_drop' );
+					$times           = $post_int_array( 'stop_time' );
+					$count           = count( $stops );
+					for ( $i = 0; $i < $count; $i ++ ) {
+						$stop = $stops[ $i ] ?? '';
+						$type = $types[ $i ] ?? '';
+						if ( $stop && $type ) {
+							$route_infos[ $i ]['stop'] = $stop;
+							$route_infos[ $i ]['type'] = $type;
+							$route_infos[ $i ]['time'] = $times[ $i ] ?? '';
+							$route_direction[]         = $stop;
+							if ( $type == 'bp' || $type == 'both' ) {
+								$route_infos[ $i ]['display_pickup'] = $display_pickup[ $i ] ?? '';
+							}
+							if ( $type == 'dp' || $type == 'both' ) {
+								$route_infos[ $i ]['display_drop'] = $display_drop[ $i ] ?? '';
+							}
+						}
+					}
+					$count = sizeof( $route_infos );
+					if ( $count > 0 ) {
+						$route_infos[0]['type']                      = 'bp';
+						$route_infos[0]['display_drop']              = 'off';
+						$route_infos[0]['time']                      = 0;
+						$route_infos[ $count - 1 ]['type']           = 'dp';
+						$route_infos[ $count - 1 ]['display_pickup'] = 'off';
+						foreach ( $route_infos as $route_info ) {
+							if ( $route_info['type'] == 'bp' ) {
+								$bp[] = $route_info['stop'];
+							} elseif ( $route_info['type'] == 'dp' ) {
+								$dp[] = $route_info['stop'];
+							} else {
+								$bp[] = $route_info['stop'];
+								$dp[] = $route_info['stop'];
+							}
+						}
+					}
+					/***********************************/
 					$operation_time  = [];
 					$operation_times = $post_array( 'operation_time' );
 					if ( ! empty( $operation_times ) ) {
@@ -450,6 +496,11 @@
 						'related_item'                => $post_val( 'related_item' ),
 						'post_feature'                => $post_val( 'post_feature' ),
 						'abptf_sliders'               => $post_val( 'abptf_sliders' ),
+						//================//
+						'routing_infos'               => $route_infos,
+						'route_direction'             => $route_direction,
+						'abptf_bp'                    => $bp,
+						'abptf_dp'                    => $dp,
 						//================//
 						'active_global_dates'         => $post_val( 'active_global_dates', 'on' ),
 						'abptf_dates'                 => apply_filters( 'abptf_get_date_array', [] ),

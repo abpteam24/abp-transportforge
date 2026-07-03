@@ -14,7 +14,7 @@
 
 			public function global_additional(): void {
 				if ( ABPTF_Function::on_off( 'additional_info' ) ) {
-					$additional_services = ABPTF_Function::get_option( 'abptf_additional', ABPTF_Layout::static_additional() );
+					$additional_services = ABPTF_Function::get_option( 'abptf_additional', ABPTF_Status::static_additional() );
 					?>
                     <form class=" save_additional_service" method="post" action="">
                         <h4 class="_abp_color_theme"><span class="_mar_r_xxs">💰</span><?php esc_html_e( 'Global Additional services Configuration', 'abp-transportforge' ); ?></h4>
@@ -217,17 +217,17 @@
 
 			public function import_additional(): void {
 				if ( ! check_ajax_referer( 'abptf_admin_ajax_nonce', 'nonce', false ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ),'type'=>'warn' ], 403 );
 				}
 				if ( ! current_user_can( 'manage_options' ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ),'type'=>'warn'  ], 403 );
 				}
-				$additional_services = ABPTF_Function::get_option( 'abptf_additional', ABPTF_Layout::static_additional() );
+				$additional_services = ABPTF_Function::get_option( 'abptf_additional', ABPTF_Status::static_additional() );
 				$additional_services = is_array( $additional_services ) ? $additional_services : [];
 				ob_start();
 				$this->additional_service( $additional_services );
 				$html_content = ob_get_clean();
-				wp_send_json_success( [ 'html' => $html_content, 'msg' => __( 'Additional services ImportedSuccessfully ..... !! ', 'abp-transportforge' ) ] );
+				wp_send_json_success( [ 'html' => $html_content, 'msg' => __( 'Additional services ImportedSuccessfully ..... !! ', 'abp-transportforge' ) ,'type'=>'success' ] );
 			}
 		}
 		new ABPTF_Additional();

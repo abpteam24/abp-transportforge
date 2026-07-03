@@ -215,7 +215,7 @@
                         </select>
                     </label>
 				<?php } else { ?>
-                    <p><?php echo esc_html( ABPTF_Layout::array_info( 'no_organizer' ) ); ?></p>
+                    <p><?php echo esc_html( ABPTF_Status::array_info( 'no_organizer' ) ); ?></p>
 					<?php
 				}
 			}

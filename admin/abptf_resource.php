@@ -343,43 +343,43 @@
 
 			public function save_faqs(): void {
 				if ( ! check_ajax_referer( 'abptf_admin_ajax_nonce', 'nonce', false ) ) {
-					wp_send_json_error( [ 'msg' => __( 'Invalid security token.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'msg' => __( 'Invalid security token.', 'abp-transportforge' ), 'type' => 'warn' ], 403 );
 				}
 				if ( ! current_user_can( 'manage_options' ) ) {
-					wp_send_json_error( [ 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ), 'type' => 'warn' ], 403 );
 				}
 				$abptf_faqs = $this->get_faq_array();
 				update_option( 'abptf_faqs', $abptf_faqs );
-				wp_send_json_success( [ 'msg' => __( 'FAQs Configuration Saved Successfully..... !! ', 'abp-transportforge' ) ] );
+				wp_send_json_success( [ 'msg' => __( 'FAQs Configuration Saved Successfully..... !! ', 'abp-transportforge' ), 'type' => 'success' ] );
 			}
 
 			public function import_tc(): void {
 				if ( ! check_ajax_referer( 'abptf_admin_ajax_nonce', 'nonce', false ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ), 'type' => 'warn' ], 403 );
 				}
 				if ( ! current_user_can( 'manage_options' ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ), 'type' => 'warn' ], 403 );
 				}
 				$tcs = ABPTF_Function::get_option( 'abptf_tc', '' );
 				ob_start();
 				$this->tc( $tcs );
 				$html_content = ob_get_clean();
-				wp_send_json_success( [ 'html' => $html_content, 'msg' => __( 'Term & Conditions  Imported Successfully ..... !! ', 'abp-transportforge' ) ] );
+				wp_send_json_success( [ 'html' => $html_content, 'msg' => __( 'Term & Conditions  Imported Successfully ..... !! ', 'abp-transportforge' ), 'type' => 'success' ] );
 			}
 
 			public function import_faq(): void {
 				if ( ! check_ajax_referer( 'abptf_admin_ajax_nonce', 'nonce', false ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ), 'type' => 'warn' ], 403 );
 				}
 				if ( ! current_user_can( 'manage_options' ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ), 'type' => 'warn' ], 403 );
 				}
 				$faqs = ABPTF_Function::get_option( 'abptf_faqs' );
 				$faqs = is_array( $faqs ) ? $faqs : [];
 				ob_start();
 				$this->faq( $faqs );
 				$html_content = ob_get_clean();
-				wp_send_json_success( [ 'html' => $html_content, 'msg' => __( 'FAQ ImportedSuccessfully ..... !! ', 'abp-transportforge' ) ] );
+				wp_send_json_success( [ 'html' => $html_content, 'msg' => __( 'FAQ ImportedSuccessfully ..... !! ', 'abp-transportforge' ), 'type' => 'success' ] );
 			}
 		}
 		new ABPTF_Resource();

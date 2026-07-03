@@ -181,7 +181,7 @@
                         </select>
                     </label>
 				<?php } else { ?>
-                    <p class="_abp"><?php echo esc_html( ABPTF_Layout::array_info( 'no_brand' ) ); ?></p>
+                    <p class="_abp"><?php echo esc_html( ABPTF_Status::array_info( 'no_brand' ) ); ?></p>
 				<?php }
 			}
 

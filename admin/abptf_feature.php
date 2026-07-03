@@ -87,17 +87,16 @@
 					}
 				}
 				update_option( 'abptf_feature', $old_features );
-				self::update_feature_js();
 				$html = '';
-				if ( $abptf_post_id <= 0 ) {
+				if (empty($abptf_post_id) ||  $abptf_post_id <= 0 ) {
 					ob_start();
 					$this->feature_list();
 					$html = ob_get_clean();
 				}
 				wp_send_json_success( [
 					'html'       => $html,
-					'feature_js' => ABPTF_Function::get_option( 'abptf_feature_js' ),
 					'msg'        => __( 'Feature Saved Successfully..........!!', 'abp-transportforge' ),
+					'feature_js' => (!empty($abptf_post_id) && $abptf_post_id>0?self::get_feature_js():''),
 				] );
 			}
 
@@ -114,7 +113,6 @@
 				if ( ! empty( $fec_id ) && isset( $features[ $fec_id ] ) ) {
 					unset( $features[ $fec_id ] );
 					update_option( 'abptf_feature', $features );
-					self::update_feature_js();
 				}
 				ob_start();
 				$this->feature_list();
@@ -170,7 +168,7 @@
 				wp_send_json_success( [ 'html' => $html, 'msg' => __( 'Feature Form Loaded Successfully .....! ', 'abp-transportforge' ) ] );
 			}
 
-			public static function update_feature_js(): void {
+			public static function get_feature_js(): array {
 				$features   = ABPTF_Function::get_option( 'abptf_feature' );
 				$features   = is_array( $features ) ? $features : [];
 				$feature_js = [];
@@ -178,8 +176,8 @@
 					foreach ( $features as $key => $feature ) {
 						$feature_js[] = [ 'id' => $key, 'icon' => ( $feature['icon'] ?? '' ), 'label' => ( $feature['label'] ?? '' ), 'value' => ( $feature['value'] ?? '' ) ];
 					}
-					update_option( 'abptf_feature_js', $feature_js );
 				}
+                return $feature_js;
 			}
 
 			public static function form_feature( $feature = [], $id = '' ): void {

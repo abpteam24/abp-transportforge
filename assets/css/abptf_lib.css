@@ -512,9 +512,6 @@
 	div.abptf_area .dropdown_list li { padding: var(--tf_gap_xs); cursor: pointer; border-bottom: 1px solid var(--tf_color_border); margin: 0; list-style-type: none; white-space: nowrap;color: var(--tf_color_black);background-color: var(--tf_color_white);}
 	div.abptf_area .dropdown_list li:last-child { border-bottom: none; }
 	div.abptf_area .dropdown_list li:hover { color: var(--tf_color_rose_dusty); }
-	/*****Form Qty inc dec*******/
-	div.abptf_area .qty_input { max-width: 120px; }
-	div.abptf_area [class*="_group_content"].qty_input [class*="_form_control"] {max-width: 60px;min-width: 60px;}
 	/**********Responsive*********/
 	@media only screen and (max-width: 1050px) {
 		div.abptf_area [class*="_form_inline"] [class*="_input_item"] { max-width: calc(33.33% - var(--tf_gap));}
@@ -526,7 +523,6 @@
 		div.abptf_area [class*="_form_inline"] [class*="_input_item"] { max-width: 100%; min-width: 100%; }
 	}
 }
-
 /******************************************************************** List section ************************************************/
 @media only screen and (min-width: 10px) {
 	.abptf_area ul[class*="_abp"] { list-style-type: none; margin: 0; padding: 0; line-height: 1.25; }
@@ -598,9 +594,9 @@
 	div.abptf_area [class*="_panel_body"] { padding: var(--tf_gap_xs); background-color: var(--tf_color_white); overflow-x: auto;}
 	div.abptf_area [class*="_panel_footer"] { padding: var(--tf_gap) var(--tf_gap_xs) var(--tf_gap_xs) var(--tf_gap_xs); background-color: #161B37; color: #FFF; }
 	div.abptf_area [class*="_panel_footer"][class*="_xs"] {padding: var(--tf_gap_xs);}
-	div.abptf_area [class*="_panel_head"] .load_more{color: var(--tf_color_alert);}
-	div.abptf_area [class*="_abp_panel"] [class*="_abp_panel"]{border: var(--tf_gap_xs) solid var(--tf_color_7);}
-	div.abptf_area [class*="_abp_panel"] [class*="_abp_panel"] [class*="_panel_head"]{background-color: var(--tf_color_7);}
+	div.abptf_area [class*="_panel_head"] .load_more {color: var(--tf_color_alert);}
+	div.abptf_area [class*="_abp_panel"] [class*="_abp_panel"] {border: var(--tf_gap_xs) solid var(--tf_color_7);}
+	div.abptf_area [class*="_abp_panel"] [class*="_abp_panel"] [class*="_panel_head"] {background-color: var(--tf_color_7);}
 }
 /******************************************************************** Popup section ************************************************/
 @media only screen and (min-width: 10px) {
@@ -770,10 +766,9 @@
 }
 /******************************************************************** Load More************************************************/
 @media only screen and (min-width: 10px) {
-	div.abptf_area .load_more { text-align: left;line-height: 1.5;color: var(--tf_color_info);font-weight: normal;font-size: var(--tf_fs_small);position: relative;}
-	div.abptf_area .load_more .load_more_content { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: justify;transition: var(--tf_transition);position: relative;z-index: 1;}
-	div.abptf_area .load_more .load_more_content.expanded {display: block; overflow: visible;background-color: transparent;}
-	div.abptf_area .load_more_content.expanded + .load_more_action { position: relative; }
+	div.abptf_area .load_more { text-align: left;line-height: 1.5;color: var(--tf_color_info);font-weight: normal;font-size: var(--tf_fs_small);position: relative;display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: var(--tf_transition);position: relative;z-index: 1;}
+	div.abptf_area .load_more.expanded {display: block; overflow: visible;background-color: transparent;}
+	div.abptf_area .load_more.expanded  .load_more_action { position: relative; }
 	div.abptf_area .load_more_action { color: #0073AA; padding: 0 var(--tf_gap_xxs); cursor: pointer; position: absolute; right: 0; bottom: 0; background: var(--tf_color_4);transition: var(--tf_transition);backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);z-index: 2;}
 	div.abptf_area .load_more_action:hover {opacity: 0.7;}
 }
@@ -1081,9 +1076,10 @@
 /******************************************************************** Group Content ************************************************/
 @media only screen and (min-width: 10px) {
 	div.abptf_area [class*="_group_content"] { display: -webkit-inline-flex; display: inline-flex; font-size: var(--tf_fs); text-align: center; position: relative; -webkit-border-radius: var(--tf_br); border-radius: var(--tf_br); gap: 0;border: 1px solid var(--tf_color_border);}
-	div.abptf_area [class*="_group_content"] > * {margin: 0;border-radius: 0;border: none; border-right: 1px solid var(--tf_color_border);}
-	div.abptf_area [class*="_group_content"] >:last-child{border: none;}
-	div.abptf_area [class*="_group_content"] [class*="_form_control"] { text-align: center; background-color: var(--tf_color_white); height: 100%; border-radius: 0;min-height: auto;min-width: 75px;width:max-content;border-top: none;		border-bottom: none; }
+	div.abptf_area [class*="_group_content"] * {border: none;}
+	div.abptf_area [class*="_group_content"] > * {margin: 0;border-radius: 0; border-right: 1px solid var(--tf_color_border);}
+	div.abptf_area [class*="_group_content"] > :last-child {border: none;}
+	div.abptf_area [class*="_group_content"] [class*="_form_control"] { text-align: center; background-color: var(--tf_color_white); height: 100%; border-radius: 0;min-height: auto;min-width: 75px;width: max-content;border-top: none; border-bottom: none; }
 	div.abptf_area [class*="_group_content"] [class*="_group_content"] {height: 100%;background-color: var(--tf_color_white);}
 	div.abptf_area [class*="_group_content"] [class*="_group_content"] * {border-radius: 0;}
 	div.abptf_area [class*="_group_content"] textarea[class*="_form_control"] { text-align: left; }
@@ -1092,7 +1088,8 @@
 	div.abptf_area [class*="_group_content"] input[type="radio"]::after { position: absolute; content: ""; width: 20px; height: 20px; left: 0; top: 0; border: 1px solid var(--tf_color_border); border-radius: 50%;margin: 10px; }
 	div.abptf_area [class*="_group_content"] input[type="radio"]:checked::after { border-color: var(--tf_color_theme); }
 	div.abptf_area [class*="_group_content"] input[type="radio"]:checked::before { position: absolute; content: ""; width: 14px; height: 14px; left: 3px; top: 3px; border: 1px solid var(--tf_color_theme); border-radius: 50%; background-color: var(--tf_color_theme);margin: var(--tf_gap_xs); }
-	div.abptf_area [class*="_ag_content"] { min-width: 30px; cursor: pointer; background-color: #FFF; color: var(--tf_color_theme_88); display: -webkit-flex; display: flex; -webkit-justify-content: center; justify-content: center; -webkit-align-items: center; align-items: center;border: 1px solid var(--tf_color_border);}
+	div.abptf_area [class*="_ag_content"] { min-width: 30px; cursor: pointer; background-color: #FFF; color: var(--tf_color_theme_88); display: -webkit-flex; display: flex; -webkit-justify-content: center; justify-content: center; -webkit-align-items: center; align-items: center;}
+	div.abptf_area [class*="_group_content"].qty_input [class*="_form_control"] {max-width: 60px;min-width: 60px;}
 	@media only screen and (max-width: 450px) {
 		div.abptf_area [class*="_ag_content"] { min-width: 25px; }
 	}
@@ -1102,7 +1099,7 @@
 	div.abptf_area .faq_area {}
 	div.abptf_area .faq_area .faq_list {display: -webkit-flex; display: flex; -webkit-flex-flow: column; flex-flow: column;gap: var(--tf_gap_xs);}
 	div.abptf_area .faq_item { border: 5px solid var(--tf_color_wp_bg); overflow: hidden; transition: box-shadow 0.3s ease;}
-	div.abptf_area .faq_item:hover { border: 5px solid  var(--tf_color_green_pale); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);}
+	div.abptf_area .faq_item:hover { border: 5px solid var(--tf_color_green_pale); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);}
 	div.abptf_area .faq_question { width: 100%;background: var(--tf_color_wp_bg); padding: var(--tf_gap_xs) var(--tf_gap_xs); border: none; outline: none; color: var(--tf_color_info); cursor: pointer; transition: color 0.3s ease;display: -webkit-flex;display: flex;-webkit-justify-content: space-between;justify-content: space-between;-webkit-align-items: center;align-items: center;}
 	div.abptf_area .faq_item.active { border: 5px solid var(--tf_color_green_pale); }
 	div.abptf_area .faq_item.active .faq_question { color: var(--tf_color_muted); }

@@ -14,7 +14,7 @@
 
 			public function global_client_form(): void {
 				if ( ABPTF_Function::on_off( 'client_info' ) ) {
-					$abptf_forms = ABPTF_Function::get_option( 'abptf_forms', ABPTF_Layout::static_form() );
+					$abptf_forms = ABPTF_Function::get_option( 'abptf_forms', ABPTF_Status::static_form() );
 					?>
                     <form class="save_client_form" method="post" action="">
                         <h4 class="_abp"><span class="_mar_r_xxs">📋</span> <?php esc_html_e( 'Global Client Form Configuration', 'abp-transportforge' ); ?></h4>
@@ -239,18 +239,18 @@
 
 			public function import_global_form(): void {
 				if ( ! check_ajax_referer( 'abptf_admin_ajax_nonce', 'nonce', false ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Invalid security token.', 'abp-transportforge' ),'type'=>'warn'  ], 403 );
 				}
 				if ( ! current_user_can( 'manage_options' ) ) {
-					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ) ], 403 );
+					wp_send_json_error( [ 'html' => '', 'msg' => __( 'Insufficient permissions.', 'abp-transportforge' ),'type'=>'warn'  ], 403 );
 				}
-				$default_form = ABPTF_Layout::static_form();
+				$default_form = ABPTF_Status::static_form();
 				$forms        = ABPTF_Function::get_option( 'abptf_forms', $default_form ) ?? [];
 				$forms        = is_array( $forms ) ? $forms : [];
 				ob_start();
 				$this->passenger_form_settings( $forms );
 				$html_content = ob_get_clean();
-				wp_send_json_success( [ 'html' => $html_content, 'msg' => __( 'Global Client Form Imported Successfully ..... !! ', 'abp-transportforge' ) ] );
+				wp_send_json_success( [ 'html' => $html_content, 'msg' => __( 'Global Client Form Imported Successfully ..... !! ', 'abp-transportforge' )  ,'type'=>'success' ] );
 			}
 		}
 		new ABPTF_Form();

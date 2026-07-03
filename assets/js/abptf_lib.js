@@ -1,14 +1,162 @@
+function abptf_init(target = jQuery('div.abptf_area')) {
+    abptf_load_tabs(target);
+    abptf_load_more(target);
+    abptf_load_image(target);
+    abptf_load_datepicker(target);
+}
+function abptf_load_more($searchScope = jQuery('div.abptf_area')) {
+    let $containers = $searchScope.find('.load_more');
+    if ($containers.length === 0) return;
+    $containers.each(function () {
+        let $container = jQuery(this);
+        let $toggleBtn = $container.find('.load_more_action');
+        if ($toggleBtn.length === 0) return;
+        let textMore = $toggleBtn.attr('data-more') || '... Load More';
+        let textLess = $toggleBtn.attr('data-less') || ' ....Show Less';
+        let rawElement = $container[0];
+        if (rawElement.scrollHeight <= rawElement.clientHeight) {
+            $toggleBtn.hide();
+        } else {
+            $toggleBtn.show();
+        }
+        $toggleBtn.off('click').on('click', function () {
+            $container.toggleClass('expanded');
+            if ($container.hasClass('expanded')) {
+                $toggleBtn.text(textLess);
+            } else {
+                $toggleBtn.text(textMore);
+            }
+        });
+    });
+}
+function abptf_load_datepicker(parent = jQuery('.abptf_area')) {
+    parent.find(".abp_datepicker.hasDatepicker").each(function () {
+        jQuery(this).removeClass('hasDatepicker').attr('id', '').removeData('datepicker').unbind();
+    }).promise().done(function () {
+        parent.find(".abp_datepicker").datepicker({
+            dateFormat: abptf_var.date_format, autoSize: true, changeMonth: true, changeYear: true, //showButtonPanel: true,
+            onSelect: function (dateString, data) {
+                let date = data.selectedYear + '-' + ('0' + (parseInt(data.selectedMonth) + 1)).slice(-2) + '-' + ('0' + parseInt(data.selectedDay)).slice(-2);
+                jQuery(this).closest('label').find('input[type="hidden"]').val(date).trigger('change');
+            }
+        });
+    });
+}
+function abptf_load_image(body = jQuery('div.abptf_area')) {
+    body.find('[data-image-href]:visible').each(function () {
+        let target = jQuery(this);
+        let bg_url = target.data('image-href');
+        target.attr('data-image-href', '');
+        if (!bg_url || bg_url.width === 0 || bg_url.width === 'undefined') {
+            bg_url = abptf_var.blank_image;
+        }
+        if (bg_url) {
+            target.find('img').attr('src', bg_url).promise().done(function () {
+                abptf_spinner_remove(target);
+            });
+        }
+    });
+    return true;
+}
+function abptf_load_tabs(body = jQuery('div.abptf_area')) {
+    body.find('.abptf_tabs').each(function () {
+        let tab_lists = jQuery(this).find('.tab_lists:first');
+        let activeTab = tab_lists.find('[data-tabs-target].abp_active');
+        let targetTab = activeTab.length > 0 ? activeTab : tab_lists.find('[data-tabs-target]').first();
+        targetTab.trigger('click');
+    });
+}
+function abptf_init_all_dynamic_datepickers(newSelector = null, newConfig = null) {
+    window.abptf_picker_data = window.abptf_picker_data || {};
+    if (newSelector && newConfig) {
+        window.abptf_picker_data[newSelector] = newConfig;
+    }
+    if (jQuery.isEmptyObject(window.abptf_picker_data)) {
+        return;
+    }
+    let currentDateFormat = (typeof abptf_var !== 'undefined' && abptf_var.date_format) ? abptf_var.date_format : 'yy-mm-dd';
+    jQuery.each(window.abptf_picker_data, function (selector, config) {
+        let $el = jQuery(selector);
+        if ($el.length) {
+            if ($el.hasClass('hasDatepicker')) {
+                $el.datepicker("destroy").removeClass('hasDatepicker').removeAttr('id').unbind();
+            }
+            $el.datepicker({
+                dateFormat: currentDateFormat,
+                autoSize: true,
+                changeMonth: true,
+                changeYear: true,
+                minDate: new Date(config.minYear, config.minMonth, config.minDay),
+                maxDate: new Date(config.maxYear, config.maxMonth, config.maxDay),
+                beforeShowDay: function (date) {
+                    var dmy = date.getDate() + "-" + (date.getMonth() + 1) + "-" + date.getFullYear();
+                    if (jQuery.inArray(dmy, config.activeDates) !== -1) {
+                        return [true, "enabled-date", config.txtAvail];
+                    } else {
+                        return [false, "disabled-date", config.txtUnavail];
+                    }
+                },
+                onSelect: function (dateString, data) {
+                    let date = data.selectedYear + '-' + ('0' + (parseInt(data.selectedMonth) + 1)).slice(-2) + '-' + ('0' + parseInt(data.selectedDay)).slice(-2);
+                    jQuery(this).closest('label').find('input[type="hidden"]').val(date).trigger('change');
+                }
+            });
+        }
+    });
+}
+function abptf_alert($this, attr = 'alert') {
+    alert($this.data(attr));
+}
+function abptf_page_scroll(target) {
+    jQuery('html, body').animate({
+        scrollTop: target.offset().top -= 150
+    }, 1000);
+}
+function abptf_toast_msg(msg, type = 'info') {
+    const icons = {success: '✅', error: '❌', warn: '⚠️', info: 'ℹ️'};
+    const el = jQuery(`<div class="toast_msg_box ${type}"><span>${icons[type] || 'ℹ️'}</span><span>${msg}</span></div>`);
+    jQuery('div.abptf_area .toast_msg_area').append(el).hide().fadeIn(200);
+    setTimeout(() => el.fadeOut(300, () => el.remove()), 3400);
+}
+function abptf_wc_price_format(price) {
+    if (typeof price === 'string') {
+        price = Number(price);
+    }
+    price = price.toFixed(abptf_var.decimal_num);
+    let total_part = price.toString().split(".");
+    total_part[0] = total_part[0].replace(/\B(?=(\d{3})+(?!\d))/g, abptf_var.thousands_separator);
+    price = total_part.join(abptf_var.currency_decimal);
+    let price_text = '';
+    if (abptf_var.currency_position === 'right') {
+        price_text = price + abptf_var.currency_symbol;
+    } else if (abptf_var.currency_position === 'right_space') {
+        price_text = price + '&nbsp;' + abptf_var.currency_symbol;
+    } else if (abptf_var.currency_position === 'left') {
+        price_text = abptf_var.currency_symbol + price;
+    } else {
+        price_text = abptf_var.currency_symbol + '&nbsp;' + price;
+    }
+    if (abptf_var.currency_suffix) {
+        price_text = price + '&nbsp;' + abptf_var.currency_suffix;
+    }
+    return price_text;
+}
+function abptf_spinner(target) {
+    if (target.find('.abptf_spinner').length < 1) {
+        target.addClass('_p_relative').append('<div class="abptf_spinner"></div>');
+    }
+}
+function abptf_spinner_remove(target = jQuery('body')) {
+    target.removeClass('_p_relative').find('.abptf_spinner').remove();
+}
 //=============================================================================Load initial=================//
 (function ($) {
     "use strict";
     $(document).ready(function () {
-        abptf_load_datepicker();
         abptf_init_all_dynamic_datepickers();
-        abptf_load_tabs();
         $('body').find('div.abptf_area [data-image-href]').each(function () {
             abptf_spinner($(this));
         });
-        abptf_load_image();
         if ($('.toast_msg_area').length === 0) {
             $('div.abptf_area').first().append('<div class="toast_msg_area"></div>');
         }
@@ -23,6 +171,7 @@
                 }, index * 600);
             });
         }
+        abptf_init();
     });
     //======================================================================Outer Close==========//
     $(document).click(function (e) {
@@ -142,14 +291,6 @@ document.body.addEventListener('click', function (event) {
     }
 });
 //==============================================================================Collapse & Tabs & Modal / Popup=================//
-function abptf_load_tabs() {
-    jQuery('div.abptf_area .abptf_tabs').each(function () {
-        let tab_lists = jQuery(this).find('.tab_lists:first');
-        let activeTab = tab_lists.find('[data-tabs-target].abp_active');
-        let targetTab = activeTab.length > 0 ? activeTab : tab_lists.find('[data-tabs-target]').first();
-        targetTab.trigger('click');
-    });
-}
 function abptf_target_close(close_id, $this) {
     if ($this.closest('.tf_close_area').length > 0) {
         $this.closest('.tf_close_area').find('[data-close="' + close_id + '"]').slideUp(250);
@@ -193,19 +334,18 @@ function abptf_popup_close(target_id = '') {
             tab_content.children('[data-tabs="' + tabsTarget + '"]').slideDown(350);
             tab_content.children('[data-tabs].abp_active').slideUp(350).removeClass('abp_active').promise().done(function () {
                 tab_content.children('[data-tabs="' + tabsTarget + '"]').addClass('abp_active').promise().done(function () {
-                    abptf_load_image();
                     parent.height('auto');
+                    abptf_init(tab_content);
                 });
             });
         }
-        abptf_load_more();
     });
     //================//
     $(document).on('click', 'div.abptf_area [data-target-popup]', function () {
         let $this = $(this);
         let target = $this.attr('data-active-popup', '').data('target-popup');
         $('body').addClass('_stop_scroll').find('[data-popup="' + target + '"]').addClass('in').promise().done(function () {
-            abptf_load_image();
+            abptf_init($this);
             $this.trigger('abp_trigger');
             return true;
         });
@@ -642,121 +782,6 @@ function abptf_pagination_item(parent) {
         abptf_live_pagination(parent);
     });
 }(jQuery));
-//================================================================================Load Bg Image=================//
-function abptf_load_image(body = jQuery('body .abptf_area')) {
-    body.find('[data-image-href]:visible').each(function () {
-        let target = jQuery(this);
-        let bg_url = target.data('image-href');
-        target.attr('data-image-href', '');
-        if (!bg_url || bg_url.width === 0 || bg_url.width === 'undefined') {
-            bg_url = abptf_var.blank_image;
-        }
-        if (bg_url) {
-            target.find('img').attr('src', bg_url).promise().done(function () {
-                abptf_spinner_remove(target);
-            });
-        }
-    });
-    return true;
-}
-//=================================================================================Date picker & Sticky & Price Format & Page Scroll==============//
-function abptf_load_datepicker(parent = jQuery('.abptf_area')) {
-    parent.find(".abp_datepicker.hasDatepicker").each(function () {
-        jQuery(this).removeClass('hasDatepicker').attr('id', '').removeData('datepicker').unbind();
-    }).promise().done(function () {
-        parent.find(".abp_datepicker").datepicker({
-            dateFormat: abptf_var.date_format, autoSize: true, changeMonth: true, changeYear: true, //showButtonPanel: true,
-            onSelect: function (dateString, data) {
-                let date = data.selectedYear + '-' + ('0' + (parseInt(data.selectedMonth) + 1)).slice(-2) + '-' + ('0' + parseInt(data.selectedDay)).slice(-2);
-                jQuery(this).closest('label').find('input[type="hidden"]').val(date).trigger('change');
-            }
-        });
-    });
-}
-function abptf_init_all_dynamic_datepickers(newSelector = null, newConfig = null) {
-    window.abptf_picker_data = window.abptf_picker_data || {};
-    if (newSelector && newConfig) {
-        window.abptf_picker_data[newSelector] = newConfig;
-    }
-    if (jQuery.isEmptyObject(window.abptf_picker_data)) {
-        return;
-    }
-    let currentDateFormat = (typeof abptf_var !== 'undefined' && abptf_var.date_format) ? abptf_var.date_format : 'yy-mm-dd';
-    jQuery.each(window.abptf_picker_data, function (selector, config) {
-        let $el = jQuery(selector);
-        if ($el.length) {
-            if ($el.hasClass('hasDatepicker')) {
-                $el.datepicker("destroy").removeClass('hasDatepicker').removeAttr('id').unbind();
-            }
-            $el.datepicker({
-                dateFormat: currentDateFormat,
-                autoSize: true,
-                changeMonth: true,
-                changeYear: true,
-                minDate: new Date(config.minYear, config.minMonth, config.minDay),
-                maxDate: new Date(config.maxYear, config.maxMonth, config.maxDay),
-                beforeShowDay: function (date) {
-                    var dmy = date.getDate() + "-" + (date.getMonth() + 1) + "-" + date.getFullYear();
-                    if (jQuery.inArray(dmy, config.activeDates) !== -1) {
-                        return [true, "enabled-date", config.txtAvail];
-                    } else {
-                        return [false, "disabled-date", config.txtUnavail];
-                    }
-                },
-                onSelect: function (dateString, data) {
-                    let date = data.selectedYear + '-' + ('0' + (parseInt(data.selectedMonth) + 1)).slice(-2) + '-' + ('0' + parseInt(data.selectedDay)).slice(-2);
-                    jQuery(this).closest('label').find('input[type="hidden"]').val(date).trigger('change');
-                }
-            });
-        }
-    });
-}
-function abptf_alert($this, attr = 'alert') {
-    alert($this.data(attr));
-}
-function abptf_page_scroll(target) {
-    jQuery('html, body').animate({
-        scrollTop: target.offset().top -= 150
-    }, 1000);
-}
-function abptf_toast_msg(msg, type = 'info') {
-    const icons = {success: '✅', error: '❌', warn: '⚠️', info: 'ℹ️'};
-    const el = jQuery(`<div class="toast_msg_box ${type}"><span>${icons[type] || 'ℹ️'}</span><span>${msg}</span></div>`);
-    jQuery('div.abptf_area .toast_msg_area').append(el).hide().fadeIn(200);
-    setTimeout(() => el.fadeOut(300, () => el.remove()), 3400);
-}
-function abptf_wc_price_format(price) {
-    if (typeof price === 'string') {
-        price = Number(price);
-    }
-    price = price.toFixed(abptf_var.decimal_num);
-    let total_part = price.toString().split(".");
-    total_part[0] = total_part[0].replace(/\B(?=(\d{3})+(?!\d))/g, abptf_var.thousands_separator);
-    price = total_part.join(abptf_var.currency_decimal);
-    let price_text = '';
-    if (abptf_var.currency_position === 'right') {
-        price_text = price + abptf_var.currency_symbol;
-    } else if (abptf_var.currency_position === 'right_space') {
-        price_text = price + '&nbsp;' + abptf_var.currency_symbol;
-    } else if (abptf_var.currency_position === 'left') {
-        price_text = abptf_var.currency_symbol + price;
-    } else {
-        price_text = abptf_var.currency_symbol + '&nbsp;' + price;
-    }
-    if (abptf_var.currency_suffix) {
-        price_text = price + '&nbsp;' + abptf_var.currency_suffix;
-    }
-    return price_text;
-}
-//======================================================================================Loader==============//
-function abptf_spinner(target) {
-    if (target.find('.abptf_spinner').length < 1) {
-        target.addClass('_p_relative').append('<div class="abptf_spinner"></div>');
-    }
-}
-function abptf_spinner_remove(target = jQuery('body')) {
-    target.removeClass('_p_relative').find('.abptf_spinner').remove();
-}
 //=============================================================================Slider=================//
 (function ($) {
     "use strict";
@@ -894,7 +919,6 @@ class ABPTFSlider {
     }
 }
 document.addEventListener('DOMContentLoaded', () => {
-    abptf_load_more()
     document.querySelectorAll('div.abptf_area [data-slider]').forEach(el => new ABPTFSlider(el));
     const gallery_item = document.querySelectorAll('div.abptf_area .gallery_item');
     gallery_item.forEach(item => {
@@ -933,31 +957,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-function abptf_load_more() {
-    const containers = document.querySelectorAll('div.abptf_area .load_more');
-    containers.forEach(container => {
-        const textContent = container.querySelector('.load_more_content');
-        const toggleBtn = container.querySelector('.load_more_action');
-        if (!textContent || !toggleBtn) return;
-        const textMore = toggleBtn.getAttribute('data-more') || '... Load More';
-        const textLess = toggleBtn.getAttribute('data-less') || ' ....Show Less';
-        if (textContent.scrollHeight <= textContent.clientHeight) {
-            toggleBtn.style.display = 'none';
-        } else {
-            toggleBtn.style.display = 'inline';
-        }
-        toggleBtn.replaceWith(toggleBtn.cloneNode(true));
-        const newToggleBtn = container.querySelector('.load_more_action');
-        newToggleBtn.addEventListener('click', function () {
-            textContent.classList.toggle('expanded');
-            if (textContent.classList.contains('expanded')) {
-                newToggleBtn.textContent = textLess;
-            } else {
-                newToggleBtn.textContent = textMore;
-            }
-        });
-    });
-}
 //
 // (function ($) {
 //     "use strict";

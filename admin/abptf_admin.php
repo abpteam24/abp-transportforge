@@ -51,12 +51,10 @@
 						<?php if ( ABPTF_WC == 2 ) { ?>
                             <div class="_group_content">
                                 <button type="button" class="_btn_white" data-href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . ABPTF_Function::get_cpt() ) ); ?>" data-blank="_blank"><span class="_mar_r_xs">➕</span><?php esc_html_e( 'Add New Post', 'abp-transportforge' ); ?></button>
-								<?php if ( ABPTF_Function::on_off( 'category' ) ) { ?>
-                                    <button type="button" class="_btn_white" data-target-popup="#abptf_global_popup" data-type="category"><span class="_mar_r_xs">➕</span><?php echo esc_html__( 'Add New', 'abp-transportforge' ) . ' ' . esc_html( ABPTF_Function::category_label() ); ?></button>
-								<?php } ?>
-
-                                    <button type="button" class="_btn_white" data-target-popup="#abptf_global_popup" data-type="location"><span class="_mar_r_xs">➕</span><?php esc_html_e( 'Add New Location', 'abp-transportforge' ); ?></button>
-
+								<?php if ( ABPTF_Function::on_off( 'category' ) ) {
+									ABPTF_Layout::button_popup_global( 'category', __( 'Add New', 'abp-transportforge' ) . ' ' . ABPTF_Function::category_label(), '_btn_white' );
+								}
+									ABPTF_Layout::button_popup_global( 'location', __( 'Add New', 'abp-transportforge' ) . ' ' . ABPTF_Function::location_label(), '_btn_white' ); ?>
                             </div>
 						<?php } ?>
                     </div>
@@ -81,7 +79,7 @@
 			}
 
 			public function load_global( $abptf_info ): void {
-				$allowed_tabs = [ 'dates', 'additional', 'client_form', 'seat_plan', 'resource', 'category','organizer', 'location', 'feature', 'brand', 'discount' ];
+				$allowed_tabs = [ 'dates', 'additional', 'client_form', 'seat_plan', 'resource', 'category', 'organizer', 'location', 'feature', 'brand', 'discount' ];
 				$active_tab   = 'dates';
 				if ( isset( $_GET['_abptf_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_abptf_nonce'] ) ), 'abptf_url_action' ) ) {
 					$active_tab = isset( $_GET['global'] ) ? sanitize_text_field( wp_unslash( $_GET['global'] ) ) : 'dates';
@@ -101,7 +99,7 @@
                                 <a href="<?php echo esc_url( ABPTF_Function::build_url( 'global', [ 'global' => 'client_form' ] ) ); ?>" class="_btn_light_green_pale_xs  <?php echo esc_attr( $active_tab == 'client_form' ? 'abp_active' : '' ); ?>"><span class="_mar_r_xxs">📋</span> <?php esc_html_e( 'Client Form', 'abp-transportforge' ); ?></a>
 							<?php } ?>
 							<?php if ( ABPTF_Function::on_off( 'sp' ) ) { ?>
-                                <a href="<?php echo esc_url( ABPTF_Function::build_url( 'global', [ 'global' => 'seat_plan' ] ) ); ?>" class="_btn_light_green_pale_xs  <?php echo esc_attr( $active_tab == 'seat_plan' ? 'abp_active' : '' ); ?>"><span class="_mar_r_xxs">💺</span> <?php esc_html_e( 'Seat Plan', 'abp-transportforge' ); ?></a>
+                                <a href="<?php echo esc_url( ABPTF_Function::build_url( 'global', [ 'global' => 'seat_plan' ] ) ); ?>" class="_btn_light_green_pale_xs  <?php echo esc_attr( $active_tab == 'seat_plan' ? 'abp_active' : '' ); ?>"><span class="_mar_r_xxs">💺</span> <?php esc_html_e( 'Ticket/Seat Plan', 'abp-transportforge' ); ?></a>
 							<?php } ?>
 							<?php do_action( 'abptf_add_admin_global_tab', $active_tab ); ?>
 							<?php if ( ABPTF_Function::on_off( 'tc' ) || ABPTF_Function::on_off( 'faq' ) ) { ?>
@@ -113,9 +111,7 @@
 							<?php if ( ABPTF_Function::on_off( 'organizer' ) ) { ?>
                                 <a href="<?php echo esc_url( ABPTF_Function::build_url( 'global', [ 'global' => 'organizer' ] ) ); ?>" class="_btn_light_green_pale_xs  <?php echo esc_attr( $active_tab == 'organizer' ? 'abp_active' : '' ); ?>"><span class="_mar_r_xxs">🏢</span><?php echo esc_html( ABPTF_Function::organizer_label() ); ?></a>
 							<?php } ?>
-
-                                <a href="<?php echo esc_url( ABPTF_Function::build_url( 'global', [ 'global' => 'location' ] ) ); ?>" class="_btn_light_green_pale_xs  <?php echo esc_attr( $active_tab == 'location' ? 'abp_active' : '' ); ?>"><span class="_mar_r_xxs">📍</span><?php echo esc_html( ABPTF_Function::location_label() ); ?></a>
-
+                            <a href="<?php echo esc_url( ABPTF_Function::build_url( 'global', [ 'global' => 'location' ] ) ); ?>" class="_btn_light_green_pale_xs  <?php echo esc_attr( $active_tab == 'location' ? 'abp_active' : '' ); ?>"><span class="_mar_r_xxs">📍</span><?php echo esc_html( ABPTF_Function::location_label() ); ?></a>
 							<?php if ( ABPTF_Function::on_off( 'brand' ) ) { ?>
                                 <a href="<?php echo esc_url( ABPTF_Function::build_url( 'global', [ 'global' => 'brand' ] ) ); ?>" class="_btn_light_green_pale_xs  <?php echo esc_attr( $active_tab == 'brand' ? 'abp_active' : '' ); ?>"><span class="_mar_r_xxs">🏷️</span><?php echo esc_html( ABPTF_Function::brand_label() ) ?></a>
 							<?php } ?>

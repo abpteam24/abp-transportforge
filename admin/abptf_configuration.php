@@ -238,9 +238,10 @@
 						array(
 							'name'    => 'category_label',
 							'label'   => __( 'Category Label', 'abp-transportforge' ),
-							'desc'    => __( 'Provide a custom singular or plural naming convention for your equipment and rental categories.', 'abp-transportforge' ),
+							'desc'    => __( 'If you wish to modify the category label, you can do so here. ', 'abp-transportforge' ),
 							'type'    => 'text',
-							'default' => __( 'Category', 'abp-transportforge' )
+							'default' => ABPTF_Function::category_label(),
+							'on_off_key' => 'category',
 						),
 						array(
 							'name'    => 'cat_slug',
@@ -251,7 +252,66 @@
 								'<strong class="_abp_color_theme">' . __( 'Settings → Permalinks', 'abp-transportforge' ) . '</strong>'
 							),
 							'type'    => 'text',
-							'default' => 'category'
+							'default' =>ABPTF_Function::category_slug(),
+							'on_off_key' => 'category',
+						),
+						array(
+							'name'    => 'organizer_label',
+							'label'   => __( 'Organizer Label', 'abp-transportforge' ),
+							'desc'    => __( 'If you wish to modify the Organizer label, you can do so here. ', 'abp-transportforge' ),
+							'type'    => 'text',
+							'default' => ABPTF_Function::organizer_label(),
+							'on_off_key' => 'organizer',
+						),
+						array(
+							'name'    => 'org_slug',
+							'label'   => __( 'Organizer Slug', 'abp-transportforge' ),
+							'desc'    => sprintf(
+							/* translators: %s: Permalinks settings page link layout */
+								__( 'Define the custom URL structure for Organizer archives. Remember to update your rewrite rules under %s after any modifications.', 'abp-transportforge' ),
+								'<strong class="_abp_color_theme">' . __( 'Settings → Permalinks', 'abp-transportforge' ) . '</strong>'
+							),
+							'type'    => 'text',
+							'default' => ABPTF_Function::organizer_slug(),
+							'on_off_key' => 'organizer',
+						),
+						array(
+							'name'    => 'brand_label',
+							'label'   => __( 'Brand Label', 'abp-transportforge' ),
+							'desc'    => __( 'If you wish to modify the Brand label, you can do so here. ', 'abp-transportforge' ),
+							'type'    => 'text',
+							'default' => ABPTF_Function::brand_label(),
+							'on_off_key' => 'brand',
+						),
+						array(
+							'name'    => 'brand_slug',
+							'label'   => __( 'Brand Slug', 'abp-transportforge' ),
+							'desc'    => sprintf(
+							/* translators: %s: Permalinks settings page link layout */
+								__( 'Define the custom URL structure for Brand archives. Remember to update your rewrite rules under %s after any modifications.', 'abp-transportforge' ),
+								'<strong class="_abp_color_theme">' . __( 'Settings → Permalinks', 'abp-transportforge' ) . '</strong>'
+							),
+							'type'    => 'text',
+							'default' => ABPTF_Function::brand_slug(),
+							'on_off_key' => 'brand',
+						),
+						array(
+							'name'    => 'location_label',
+							'label'   => __( 'Stops Label', 'abp-transportforge' ),
+							'desc'    => __( 'If you wish to modify the Stops label, you can do so here. ', 'abp-transportforge' ),
+							'type'    => 'text',
+							'default' => ABPTF_Function::location_label(),
+						),
+						array(
+							'name'    => 'location_slug',
+							'label'   => __( 'Stops Slug', 'abp-transportforge' ),
+							'desc'    => sprintf(
+							/* translators: %s: Permalinks settings page link layout */
+								__( 'Define the custom URL structure for Stops archives. Remember to update your rewrite rules under %s after any modifications.', 'abp-transportforge' ),
+								'<strong class="_abp_color_theme">' . __( 'Settings → Permalinks', 'abp-transportforge' ) . '</strong>'
+							),
+							'type'    => 'text',
+							'default' => ABPTF_Function::location_slug(),
 						),
 					) ),
 					'abptf_on_off'        => apply_filters( 'abptf_on_off_filter', array(
@@ -315,6 +375,34 @@
 							'name'    => 'feature',
 							'label'   => __( 'Features', 'abp-transportforge' ),
 							'desc'    => __( 'If you do not want to use Features, simply turn this switch OFF. This will completely disable the Features across the entire website, including all related , settings, and functionality. You can re-enable it at any time by turning the switch back ON.', 'abp-transportforge' ),
+							'type'    => 'button_switch',
+							'default' => 'on',
+						),
+						array(
+							'name'    => 'ticket_type',
+							'label'   => __( 'Multiple Ticket Type', 'abp-transportforge' ),
+							'desc'    => __( 'If you do not want to use Multiple Ticket Type, simply turn this switch OFF. This will completely disable the Multiple Ticket Type feature across the entire website, including all related settings and functionality. You can re-enable it at any time by turning the switch back ON.', 'abp-transportforge' ),
+							'type'    => 'button_switch',
+							'default' => 'on',
+						),
+						array(
+							'name'    => 'sp',
+							'label'   => __( 'Seat Plan', 'abp-transportforge' ),
+							'desc'    => __( 'If you do not want to use the Seat Plan feature, simply turn this switch OFF. This will completely disable the Seat Plan feature for all transports across your website. If you only want to sell tickets without seat selection, you can use Ticket Types instead. You can re-enable the Seat Plan feature at any time by turning this switch back ON.', 'abp-transportforge' ),
+							'type'    => 'button_switch',
+							'default' => 'on',
+						),
+						array(
+							'name'    => 'pickup',
+							'label'   => __( 'Multiple Pickup Point', 'abp-transportforge' ),
+							'desc'    => __( 'If you do not want to use Multi Pickup, simply turn this switch OFF. This will completely disable the Multi Pickup feature across the entire website, including all related settings and functionality. You can re-enable it at any time by turning the switch back ON.', 'abp-transportforge' ),
+							'type'    => 'button_switch',
+							'default' => 'on',
+						),
+						array(
+							'name'    => 'drop',
+							'label'   => __( 'Multiple Drop-Off Point', 'abp-transportforge' ),
+							'desc'    => __( 'If you do not want to use Multi  Drop-off, simply turn this switch OFF. This will completely disable the Multi  Drop-off feature across the entire website, including all related settings and functionality. You can re-enable it at any time by turning the switch back ON.', 'abp-transportforge' ),
 							'type'    => 'button_switch',
 							'default' => 'on',
 						),
