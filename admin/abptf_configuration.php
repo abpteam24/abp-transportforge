@@ -357,6 +357,13 @@
 							'type'    => 'button_switch',
 							'default' => 'on',
 						),
+                        array(
+                            'name'    => 'feature',
+                            'label'   => ABPTF_Function::feature_label(),
+                            'desc'    => __( 'If you do not want to use the Transport Feature, simply turn this switch OFF. Once disabled, the Transport Feature field and related Transport Feature options will be completely removed from the site.', 'abp-transportforge' ),
+                            'type'    => 'button_switch',
+                            'default' => 'on',
+                        ),
 						array(
 							'name'    => 'category',
 							'label'   => ABPTF_Function::category_label(),
@@ -393,16 +400,16 @@
 							'default' => 'on',
 						),
 						array(
-							'name'    => 'pickup',
-							'label'   => __( 'Multiple Pickup Point', 'abp-transportforge' ),
-							'desc'    => __( 'If you do not want to use Multi Pickup, simply turn this switch OFF. This will completely disable the Multi Pickup feature across the entire website, including all related settings and functionality. You can re-enable it at any time by turning the switch back ON.', 'abp-transportforge' ),
+							'name'    => 'return',
+							'label'   => __( 'Transport return', 'abp-transportforge' ),
+							'desc'    => __( 'If you do not want to use the same Transport return feature, simply turn this switch OFF. This will completely disable the Transport return feature for all transports across your website.  You can re-enable the Transport return feature at any time by turning this switch back ON.', 'abp-transportforge' ),
 							'type'    => 'button_switch',
 							'default' => 'on',
 						),
 						array(
-							'name'    => 'drop',
-							'label'   => __( 'Multiple Drop-Off Point', 'abp-transportforge' ),
-							'desc'    => __( 'If you do not want to use Multi  Drop-off, simply turn this switch OFF. This will completely disable the Multi  Drop-off feature across the entire website, including all related settings and functionality. You can re-enable it at any time by turning the switch back ON.', 'abp-transportforge' ),
+							'name'    => 'pickup',
+							'label'   => __( 'Multiple Pickup/Drop-Off  Point', 'abp-transportforge' ),
+							'desc'    => __( 'If you do not want to use Multi Pickup/Drop-Off , simply turn this switch OFF. This will completely disable the Multi Pickup/Drop-Off  feature across the entire website, including all related settings and functionality. You can re-enable it at any time by turning the switch back ON.', 'abp-transportforge' ),
 							'type'    => 'button_switch',
 							'default' => 'on',
 						),
@@ -919,7 +926,7 @@
                     <div class="_f_wrap_fj_between_fa_center">
                         <span class="_abp_label"><?php echo esc_html( $option['label'] ?? '' ); ?></span>
                         <label>
-                            <input type="text" name="<?php echo esc_attr( $option['name'] ?? '' ); ?>" disabled class="_form_control abptf_color_picker" value="<?php echo esc_attr( $option['value'] ?? '' ); ?>" data-default-color="<?php echo esc_html( $option['default'] ?? '' ); ?>"/>
+                            <input type="text" name="<?php echo esc_attr( $option['name'] ?? '' ); ?>" disabled class="_form_control abp_color_picker" value="<?php echo esc_attr( $option['value'] ?? '' ); ?>" data-default-color="<?php echo esc_html( $option['default'] ?? '' ); ?>"/>
                         </label>
                     </div>
 					<?php self::description( $option ); ?>

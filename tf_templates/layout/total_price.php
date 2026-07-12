@@ -2,8 +2,8 @@
 	if ( ! defined( 'ABSPATH' ) ) {
 		exit; // Exit if accessed directly
 	}
-	add_action( 'abptf_total_price_template', function ( $abptf_infos = [] ) {
-		$post_id = absint( $abptf_infos['post_id'] ?? 0 );
+	add_action( 'abptf_total_price_template', function ( $post_infos = [] ) {
+		$post_id = absint( $post_infos['post_id'] ?? 0 );
 		if ( $post_id <= 0 ) {
 			return;
 		}
@@ -11,7 +11,7 @@
 		if ( $wc_link <= 0 ) {
 			return;
 		}
-		$display_additional = $abptf_infos['display_additional_services'] ?? ABPTF_Function::get_post_info( $post_id, 'display_additional_services', 'on' );
+		$display_additional = $post_infos['display_additional_services'] ?? ABPTF_Function::get_post_info( $post_id, 'display_additional_services', 'on' );
 		?>
         <div class="total_continue_area">
             <div class="total_continue item_box_1">

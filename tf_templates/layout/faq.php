@@ -2,16 +2,16 @@
 	if ( ! defined( 'ABSPATH' ) ) {
 		exit; // Exit if accessed directly
 	}
-	add_action( 'abptf_faq_template', function ( $abptf_infos = [], $type = '' ) {
+	add_action( 'abptf_faq_template', function ( $post_infos = [], $type = '' ) {
 		if ( ABPTF_Function::on_off( 'faq' ) ) {
 			$faq_infos = [];
-			if ( ! empty( $abptf_infos ) ) {
-				$display           = $abptf_infos['display_faq'] ?? 'on';
-				$active_global_faq = $abptf_infos['active_global_faq'] ?? 'on';
+			if ( ! empty( $post_infos ) ) {
+				$display           = $post_infos['display_faq'] ?? 'on';
+				$active_global_faq = $post_infos['active_global_faq'] ?? 'on';
 				if ( $display === 'on' ) {
 					$faq_infos = ( $active_global_faq === 'on' )
 						? ABPTF_Function::get_option( 'abptf_faqs' )
-						: ( $abptf_infos['abptf_faqs'] ?? [] );
+						: ( $post_infos['abptf_faqs'] ?? [] );
 				}
 			} elseif ( $type === 'global' ) {
 				$faq_infos = ABPTF_Function::get_option( 'abptf_faqs' );

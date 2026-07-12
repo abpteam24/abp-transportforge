@@ -78,6 +78,9 @@
 				if ( ! defined( 'ABPTF_Min_Price' ) ) {
 					define( 'ABPTF_Min_Price', ABPTF_Function::get_option( 'abptf_min_price' ) );
 				}
+				if ( ! defined( 'ABPTF_ticket_type' ) ) {
+					define( 'ABPTF_ticket_type', ABPTF_Function::get_option( 'abptf_ticket' ) );
+				}
 				if ( ! defined( 'ABPTF_On_Off' ) ) {
 					define( 'ABPTF_On_Off', ABPTF_Function::get_option( 'abptf_on_off' ) );
 				}

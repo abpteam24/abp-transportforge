@@ -2,15 +2,15 @@
 	if ( ! defined( 'ABSPATH' ) ) {
 		exit; // Exit if accessed directly
 	}
-	add_action( 'abptf_property_item_group_template', function ( $abptf_infos, $properties = [] ) {
+	add_action( 'abptf_property_item_group_template', function ( $post_infos, $properties = [] ) {
 		//echo '<pre>';print_r($property);echo '</pre>';
 		if ( ! empty( $properties ) && is_array( $properties ) && sizeof( $properties ) > 0 ) {
 			$ex_count = 0;
 			foreach ( $properties as $property ) {
 				if ( is_array( $property ) && sizeof( $property ) > 0 ) {
-					$location       = $abptf_infos['location'] ?? '';
-					$start_time     = $abptf_infos['start_time'] ?? '';
-					$end_time       = $abptf_infos['end_time'] ?? '';
+					$location       = $post_infos['location'] ?? '';
+					$start_time     = $post_infos['start_time'] ?? '';
+					$end_time       = $post_infos['end_time'] ?? '';
 					$post_id        = $property['post_id'] ?? '';
 					$rent_rule      = $property['rent_rule'] ?? '';
 					$price_qty_info = json_decode( $property['price_qty_info'] ?? '', true ) ?: [];
@@ -20,18 +20,18 @@
 					$price_info = $price_qty_info[ $rent_rule ] ?? [];
 					$others     = json_decode( $property['others'] ?? '', true ) ?: [];
 					if ( ! empty( $rent_rule ) && ! empty( $price_info ) ) {
-						$time_duration                = ABPTF_Function::time_duration( $abptf_infos, $price_info );
-						$total_price                  = ABPTF_Function::get_price( $abptf_infos, $property, $time_duration );
+						$time_duration                = ABPTF_Function::time_duration( $post_infos, $price_info );
+						$total_price                  = ABPTF_Function::get_price( $post_infos, $property, $time_duration );
 						$property_name                = $property['name'] ?? '';
-						$abptf_infos['property_name'] = $property_name;
-						$abptf_infos['property_id']   = $property['id'] ?? '';
-						//echo '<pre>';print_r($abptf_infos);echo '</pre>';
+						$post_infos['property_name'] = $property_name;
+						$post_infos['property_id']   = $property['id'] ?? '';
+						//echo '<pre>';print_r($post_infos);echo '</pre>';
 						if ( $ex_count > 0 ) { ?>
                             <div class="_divider_xs"></div>
 						<?php }
 						$ex_count ++;
 						?>
-                        <div class="property_item <?php echo esc_attr( $abptf_infos['add_class'] ?? '' ); ?>">
+                        <div class="property_item <?php echo esc_attr( $post_infos['add_class'] ?? '' ); ?>">
                             <div class="item_head"><?php ABPTF_Layout::image_icon( ($others['icon'] ?? '' ),''); ?></div>
                             <div class="property_details">
                                 <div class="property_title_price">
@@ -56,9 +56,9 @@
                                 <div class="property_item_bottom">
 									<?php ABPTF_Layout::item_feature( $property['features'] ?? '' );
 										if ( ! empty( $start_time ) && ! empty( $end_time ) ) {
-											ABPTF_Layout::item_cost( $abptf_infos, $price_info, $total_price, $time_duration );
+											ABPTF_Layout::item_cost( $post_infos, $price_info, $total_price, $time_duration );
 											if ( ! empty( $time_duration ) ) {
-												ABPTF_Layout::item_select_property( $abptf_infos, $price_info, $total_price );
+												ABPTF_Layout::item_select_property( $post_infos, $price_info, $total_price );
 											}
 										}
 									?>

@@ -2,14 +2,14 @@
 	if ( ! defined( 'ABSPATH' ) ) {
 		exit;
 	}
-	add_action( 'abptf_term_condition_template', function ( $abptf_infos = [], $type = '' ) {
+	add_action( 'abptf_term_condition_template', function ( $post_infos = [], $type = '' ) {
 		if ( ABPTF_Function::on_off( 'tc' ) ) {
 			$infos = '';
-			if ( ! empty( $abptf_infos ) && is_array( $abptf_infos ) ) {
-				$display          = $abptf_infos['display_tc'] ?? 'on';
-				$active_global_tc = $abptf_infos['active_global_tc'] ?? 'on';
+			if ( ! empty( $post_infos ) && is_array( $post_infos ) ) {
+				$display          = $post_infos['display_tc'] ?? 'on';
+				$active_global_tc = $post_infos['active_global_tc'] ?? 'on';
 				if ( $display === 'on' ) {
-					$infos = ( $active_global_tc === 'on' ) ? ABPTF_Function::get_option( 'abptf_tc', '' ) : ( $abptf_infos['abptf_tc'] ?? '' );
+					$infos = ( $active_global_tc === 'on' ) ? ABPTF_Function::get_option( 'abptf_tc', '' ) : ( $post_infos['abptf_tc'] ?? '' );
 				}
 			} elseif ( $type === 'global' ) {
 				$infos = ABPTF_Function::get_option( 'abptf_tc', '' );

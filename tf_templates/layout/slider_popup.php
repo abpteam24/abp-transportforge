@@ -10,7 +10,7 @@
 		}
 		$total_images = count( $img_infos );
 		?>
-        <div class="abptf_popup" data-popup="<?php echo esc_attr( $popup_id ); ?>">
+        <div class="abp_popup" data-popup="<?php echo esc_attr( $popup_id ); ?>">
             <div class="popup_area abptf_slider">
                 <span class="popup_close"><i class="fas fa-times"></i></span>
                 <div data-slider>

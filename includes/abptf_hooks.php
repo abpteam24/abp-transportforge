@@ -33,13 +33,13 @@
 				$template_name = ABPTF_Function::get_post_info( $post_id, 'abptf_template', 'grid' );
 				do_action( 'abptf_details_' . $template_name . '_template', $post_id );
 			}
-			public function title( $post_id, $abptf_infos = [] ): void {
+			public function title( $post_id, $post_infos = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/title.php' );
-				do_action( 'abptf_title_template', $post_id, $abptf_infos );
+				do_action( 'abptf_title_template', $post_id, $post_infos );
 			}
-			public function sub_title( $post_id, $abptf_infos = [] ): void {
+			public function sub_title( $post_id, $post_infos = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/sub_title.php' );
-				do_action( 'abptf_sub_title_template', $post_id, $abptf_infos );
+				do_action( 'abptf_sub_title_template', $post_id, $post_infos );
 			}
 			public function category( $post_id, $ribbon = '' ): void {
 				include_once ABPTF_Function::template_path( 'layout/category.php' );
@@ -49,41 +49,41 @@
 				include_once ABPTF_Function::template_path( 'layout/location.php' );
 				do_action( 'abptf_location_template', $post_id, $ribbon );
 			}
-			public function search_form( $abptf_infos = [] ): void {
+			public function search_form( $post_infos = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/search_form.php' );
-				do_action( 'abptf_search_form_template', $abptf_infos );
+				do_action( 'abptf_search_form_template', $post_infos );
 			}
 			public function post_filter( $params = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/post_filter.php' );
 				do_action( 'abptf_post_filter_template', $params );
 			}
-			public function property_item( $abptf_infos, $property = [] ): void {
+			public function property_item( $post_infos, $property = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/property_item.php' );
-				do_action( 'abptf_property_item_template', $abptf_infos, $property );
+				do_action( 'abptf_property_item_template', $post_infos, $property );
 			}
-			public function property_item_group( $abptf_infos, $properties = [] ): void {
+			public function property_item_group( $post_infos, $properties = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/property_item_group.php' );
-				do_action( 'abptf_property_item_group_template', $abptf_infos, $properties );
+				do_action( 'abptf_property_item_group_template', $post_infos, $properties );
 			}
-			public function registration( $abptf_infos = [] ): void {
+			public function registration( $post_infos = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/registration.php' );
-				do_action( 'abptf_registration_template', $abptf_infos );
+				do_action( 'abptf_registration_template', $post_infos );
 			}
-			public function rental_duration( $abptf_infos = [] ): void {
+			public function rental_duration( $post_infos = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/rental_duration.php' );
-				do_action( 'abptf_duration_template', $abptf_infos );
+				do_action( 'abptf_duration_template', $post_infos );
 			}
-			public function additional( $post_id, $abptf_infos = [] ): void {
+			public function additional( $post_id, $post_infos = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/additional_services.php' );
-				do_action( 'abptf_additional_template', $post_id, $abptf_infos );
+				do_action( 'abptf_additional_template', $post_id, $post_infos );
 			}
-			public function client_form( $post_id, $abptf_infos = [] ): void {
+			public function client_form( $post_id, $post_infos = [] ): void {
 				include_once ABPTF_Function::template_path( 'layout/client_form.php' );
-				do_action( 'abptf_client_form_template', $post_id, $abptf_infos );
+				do_action( 'abptf_client_form_template', $post_id, $post_infos );
 			}
-			public function total_price( $abptf_infos ): void {
+			public function total_price( $post_infos ): void {
 				include_once ABPTF_Function::template_path( 'layout/total_price.php' );
-				do_action( 'abptf_total_price_template', $abptf_infos );
+				do_action( 'abptf_total_price_template', $post_infos );
 			}
 			public function the_content( $post_id ): void {
 				include_once ABPTF_Function::template_path( 'layout/the_content.php' );
@@ -97,13 +97,13 @@
 				include_once ABPTF_Function::template_path( 'layout/display_cart_item.php' );
 				do_action( 'abptf_display_cart_item_template', $cart_item );
 			}
-			public function faq( $abptf_infos = [], $type = '' ): void {
+			public function faq( $post_infos = [], $type = '' ): void {
 				include_once ABPTF_Function::template_path( 'layout/faq.php' );
-				do_action( 'abptf_faq_template', $abptf_infos, $type );
+				do_action( 'abptf_faq_template', $post_infos, $type );
 			}
-			public function term_condition( $abptf_infos = [], $type = '' ): void {
+			public function term_condition( $post_infos = [], $type = '' ): void {
 				include_once ABPTF_Function::template_path( 'layout/term_condition.php' );
-				do_action( 'abptf_term_condition_template', $abptf_infos, $type );
+				do_action( 'abptf_term_condition_template', $post_infos, $type );
 			}
 			public function related_item( $related_item = '' ): void {
 				include_once ABPTF_Function::template_path( 'layout/related_item.php' );

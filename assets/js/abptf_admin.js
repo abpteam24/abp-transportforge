@@ -1,67 +1,8 @@
+window.abptf_parent = window.abptf_parent || jQuery('div.abptf_admin');
 let abptf_feature_data = JSON.parse(abptf_admin_data.feature_data);
 let abptf_related_info = JSON.parse(abptf_admin_data.related_info);
 let abptf_location_info = JSON.parse(abptf_admin_data.location_info);
-function abptf_admin_init(target = jQuery('div.abptf_admin')) {
-    abptf_load_more(target);
-    abptf_load_datepicker(target);
-    abptf_sortable(target);
-    abptf_color_picker_init(target);
-    abptf_wp_editor_init(target);
-    abptf_location_selection(target);
-}
-function abptf_sortable(target = jQuery('div.abptf_admin')) {
-    let $sortable = target.find('.sortable_area');
-    if ($sortable.length === 0) {
-        $sortable = target.closest('.sortable_area');
-    }
-    if ($sortable.length > 0) {
-        $sortable.sortable({
-            handle: '.sortable_handle',
-            stop: function (event, ui) {
-                ui.item.trigger('abp_trigger');
-            }
-        });
-    }
-}
-function abptf_color_picker_init(target = jQuery('div.abptf_admin')) {
-    let $pickers = target.find('.abptf_color_picker');
-    if ($pickers.length > 0) {
-        $pickers.wpColorPicker();
-    }
-}
-function abptf_wp_editor_init(target) {
-    let textArea = target.find('textarea.wp-editor-area');
-    if (textArea.length > 0) {
-        let uniqueId = 'editor_' + Math.random().toString(36).substring(2, 11);
-        if (target.find('.wp-editor-wrap').length > 0) {
-            target.find('.wp-editor-wrap').replaceWith(textArea);
-        }
-        textArea.attr('id', uniqueId).show();
-        setTimeout(function () {
-            if (typeof wp !== 'undefined' && wp.editor) {
-                wp.editor.remove(uniqueId);
-                wp.editor.initialize(uniqueId, {
-                    tinymce: {
-                        wpautop: true,
-                        cleanup: false,
-                        verify_html: false,
-                        entity_encoding: 'raw',
-                        forced_root_block: false,
-                        valid_elements: '*[*]',
-                        setup: function (editor) {
-                            editor.on('change', function () {
-                                editor.save();
-                            });
-                        }
-                    },
-                    quicktags: true,
-                    mediaButtons: true
-                });
-            }
-        }, 100);
-    }
-}
-function abptf_location_selection(target = jQuery('div.abptf_admin')) {
+function abptf_location_selection(target = abptf_parent) {
     const $selects = target.find('.route_configuration [name="stop_name[]"]');
     if ($selects.length > 0) {
         const selectedValues = $selects.map(function () {
@@ -82,11 +23,31 @@ function abptf_location_selection(target = jQuery('div.abptf_admin')) {
             });
         });
     }
+    const $selects_return = target.find('.route_configuration [name="return_stop_name[]"]');
+    if ($selects_return.length > 0) {
+        const selectedValues = $selects_return.map(function () {
+            return jQuery(this).val();
+        }).get().filter(value => value !== "");
+        $selects_return.each(function () {
+            const $currentSelect = jQuery(this);
+            const currentValue = $currentSelect.val();
+            $currentSelect.html('<option value="" selected>' + abptf_admin_data.msg.select_stops + '</option>');
+            abptf_location_info.forEach(function (location) {
+                if (!selectedValues.includes(location.id.toString()) || location.id.toString() === currentValue) {
+                    const $option = jQuery('<option></option>').val(location.id).text(location.label);
+                    if (location.id.toString() === currentValue) {
+                        $option.prop('selected', true);
+                    }
+                    $currentSelect.append($option);
+                }
+            });
+        });
+    }
 }
 function abptf_load_post_list(parent, filter_args) {
     let target = parent.find('.post_list');
     if (target.length > 0) {
-        $.ajax({
+        jQuery.ajax({
             type: 'POST', url: abptf_admin_data.ajax_url, data: {
                 "action": "abptf_reload_post_list", "filter_args": filter_args, 'nonce': abptf_admin_data.nonce
             }, beforeSend: function () {
@@ -120,59 +81,158 @@ function abptf_get_form_data(form_area) {
             }
         }
     });
-    let post_page = jQuery("body [name='abptf_post_id']");
+    let post_page = abptf_parent.find("[name='abptf_post_id']");
     if (post_page.length > 0) {
-        formData.append('abptf_post_id', post_page.val());
+        formData.append('post_id', post_page.val());
     }
     formData.append('nonce', abptf_admin_data.nonce);
     return formData;
 }
 (function ($) {
     "use strict";
-    //========== Global popup =================//
-    $(document).on("abp_trigger", "div.abptf_admin [data-popup='#abptf_global_popup'] .popup_close", function () {
-        $(this).closest('.abptf_popup').find('.popup_body').html('');
-    });
-    $(document).on("abp_trigger", "div.abptf_admin [data-target-popup='#abptf_global_popup']", function () {
-        let tax_id = $(this).attr('data-id');
-        let type = $(this).attr('data-type');
-        let action = '';
-        if (type === 'category') {
-            action = 'abptf_add_category';
-        } else if (type === 'location') {
-            action = 'abptf_add_location';
-        } else if (type === 'brand') {
-            action = 'abptf_add_brand';
-        } else if (type === 'organizer') {
-            action = 'abptf_add_organizer';
-        } else if (type === 'feature') {
-            action = 'abptf_add_feature';
-        } else if (type === 'ticket') {
-            action = 'abptf_add_ticket_type';
-        }
+    //========== Global Function =================//
+    window.abptf_popup_open_global = function (action, id = '') {
         if (action) {
-            tax_id = (typeof tax_id !== 'undefined' && tax_id !== false) ? parseInt(tax_id) : '';
-            let body = $('body');
-            let target_id = $(this).attr('data-active-popup', '').data('target-popup');
-            let parent = body.find('[data-popup="' + target_id + '"]').find('.popup_area');
-            let target = parent.find('.popup_body');
-            let post_id = body.find("[name='abptf_post_id']").val();
-            $.ajax({
-                type: 'POST', url: abptf_admin_data.ajax_url, data: {
-                    "action": action, 'tax_id': tax_id, 'post_id': post_id, 'nonce': abptf_admin_data.nonce
-                }, beforeSend: function () {
-                    abptf_spinner(parent);
-                    abptf_toast_msg(abptf_admin_data.msg.loading);
-                }, success: function (response) {
-                    abptf_spinner_remove(parent);
-                    target.html(response.data.html).promise().done(function () {
-                        abptf_toast_msg(response.data.msg, 'success');
-                        abptf_admin_init(target);
+            $('body').addClass('_stop_scroll').find('[data-popup="#abptf_global_popup"]').addClass('in').promise().done(function () {
+                let parent = abptf_parent.find('[data-popup="#abptf_global_popup"]').find('.popup_area').addClass(action);
+                id = id !== '' ? parseInt(id) : '';
+                let target = parent.find('.popup_body');
+                let post_id = abptf_parent.find("[name='abptf_post_id']").val() || '';
+                $.ajax({
+                    type: 'POST', url: abptf_admin_data.ajax_url, data: {
+                        "action": 'abptf_add_' + action, 'id': id, 'post_id': post_id, 'nonce': abptf_admin_data.nonce
+                    }, beforeSend: function () {
+                        abptf_spinner(parent);
+                        abptf_toast_msg(abptf_admin_data.msg.loading);
+                    }, success: function (response) {
+                        abptf_spinner_remove(parent);
+                        if (response.data && response.data.hasOwnProperty('html')) {
+                            target.html(response.data.html).promise().done(function () {
+                                abptf_toast_msg(response.data.msg, response.data.type);
+                                abptf_init(target);
+                            });
+                        }
+                    }, error: function (xhr) {
+                        abptf_spinner_remove(parent);
+                        if (xhr.response && xhr.response.data) {
+                            abptf_toast_msg(xhr.response.data.msg, xhr.response.data.type);
+                        }
+                    }
+                })
+            });
+        }
+    };
+    window.abptf_popup_close_global = function () {
+        let deferred = $.Deferred();
+        let target = abptf_parent.find('[data-popup="#abptf_global_popup"]');
+        if (target.length > 0) {
+            target.removeClass('in').promise().done(function () {
+                $('body').removeClass('_stop_scroll');
+                target.find('.popup_area').removeClass().addClass('popup_area').find('.popup_body').html('').promise().done(function () {
+                    deferred.resolve(true);
+                });
+            });
+        } else {
+            deferred.resolve(true);
+        }
+        return deferred.promise();
+    };
+    window.abptf_save_global = function (action, $_this) {
+        if (action) {
+            let $this = $($_this);
+            let parent = $this.closest('.abp_form');
+            let formData = abptf_get_form_data(parent);
+            formData.append('action', 'abptf_save_' + action);
+            $.when(abptf_popup_close_global()).done(function (isClosed) {
+                if (isClosed) {
+                    let target = abptf_parent.find('.' + action);
+                    jQuery.ajax({
+                        type: 'POST',
+                        url: abptf_admin_data.ajax_url,
+                        contentType: false,
+                        processData: false,
+                        data: formData,
+                        beforeSend: function () {
+                            abptf_spinner(target);
+                            abptf_toast_msg(abptf_admin_data.msg.saving);
+                        },
+                        success: function (response) {
+                            if (target && target.length > 0 && response.data && response.data.hasOwnProperty('html')) {
+                                target.html(response.data.html).promise().done(function () {
+                                    abptf_init(target);
+                                });
+                            }
+                            if (response.data.hasOwnProperty('js')) {
+                                if (action === 'ticket_type') {
+                                    abptf_ticket_type = response.data.js;
+                                    abptf_sp_init();
+                                }
+                                if (action === 'decor_item') {
+                                    abptf_decor_item = response.data.js;
+                                    abptf_sp_init();
+                                }
+                                if (action === 'tax_location') {
+                                    abptf_location_info = response.data.js;
+                                    abptf_location_selection();
+                                }
+                                if (action === 'option_feature') {
+                                    abptf_feature_data = response.data.js;
+                                    new ABPTF_Multi_Selection('div.abptf_admin .post_feature', abptf_feature_data);
+                                }
+                            }
+                            abptf_spinner_remove(target);
+                            abptf_toast_msg(response.data.msg, response.data.type);
+                        },
+                        error: function (xhr) {
+                            abptf_spinner_remove(target);
+                            if (xhr.response && xhr.response.data) {
+                                abptf_toast_msg(xhr.response.data.msg, xhr.response.data.type);
+                            }
+                        }
                     });
                 }
-            })
+            });
         }
-    });
+    };
+    window.abptf_delete_global = function (action, id = '') {
+        if (confirm(abptf_admin_data.msg.confirm_delete + ' \n\n' + abptf_admin_data.msg.confirm_ok + ' \n ' + abptf_admin_data.msg.confirm_cancel)) {
+            id = id !== '' ? parseInt(id) : '';
+            if (action && !isNaN(id) && id !== '') {
+                let target = abptf_parent.find('.' + action);
+                jQuery.ajax({
+                    type: 'POST', url: abptf_admin_data.ajax_url, data: {
+                        "action": 'abptf_delete_' + action, 'id': id, 'nonce': abptf_admin_data.nonce
+                    }, beforeSend: function () {
+                        abptf_spinner(target);
+                        abptf_toast_msg(abptf_admin_data.msg.deleting, 'error');
+                    }, success: function (response) {
+                        if (response.data && response.data.hasOwnProperty('html')) {
+                            target.html(response.data.html).promise().done(function () {
+                                abptf_init(target);
+                            });
+                        }
+                        if (response.data.hasOwnProperty('js')) {
+                            if (action === 'ticket_type') {
+                                abptf_ticket_type = response.data.js;
+                                abptf_sp_init();
+                            }
+                            if (action === 'decor_item') {
+                                abptf_decor_item = response.data.js;
+                                abptf_sp_init();
+                            }
+                        }
+                        abptf_toast_msg(response.data.msg, response.data.type);
+                        abptf_spinner_remove(target);
+                    }, error: function (xhr) {
+                        abptf_spinner_remove(target);
+                        if (xhr.response && xhr.response.data) {
+                            abptf_toast_msg(xhr.response.data.msg, xhr.response.data.type);
+                        }
+                    }
+                })
+            }
+        }
+    };
     //==========Post List=================//
     $(document).on("click", "div.abptf_admin button.post_permanent_remove", function () {
         let post_id = $(this).attr('data-post_id');
@@ -188,7 +248,7 @@ function abptf_get_form_data(form_area) {
                 abptf_toast_msg(response.data.msg, 'warn');
                 window.location.reload();
             }
-        })
+        });
     });
     $(document).on("click", "div.abptf_admin button.post_move_trash", function () {
         let post_id = $(this).attr('data-post_id');
@@ -238,10 +298,10 @@ function abptf_get_form_data(form_area) {
         }
     });
     //==========Route config=================//
-    $(document).on('change', 'div.abptf_admin .abptf_routing  [name="stop_name[]"]', function () {
+    abptf_parent.on('abp_trigger', '.abptf_routing .add_new_hook', function () {
         abptf_location_selection();
     });
-    $(document).on('abp_trigger', 'div.abptf_admin .abptf_routing .add_new_hook', function () {
+    abptf_parent.on('change', '.abptf_routing [name="stop_name[]"] , .abptf_routing [name="return_stop_name[]"]', function () {
         abptf_location_selection();
     });
     //==========Orders list=================//
@@ -268,7 +328,7 @@ function abptf_get_form_data(form_area) {
                 if (response.data) {
                     if (response.data.hasOwnProperty('html')) {
                         target.html(response.data.html).promise().done(function () {
-                            abptf_admin_init(target);
+                            abptf_init(target);
                         });
                     }
                     abptf_toast_msg(response.data.msg, response.data.type);
@@ -316,25 +376,7 @@ function abptf_get_form_data(form_area) {
             });
         }
     });
-//========== Dates configuration=================//
-    $(document).on('submit', 'div.abptf_admin form.save_dates', function (e) {
-        e.preventDefault();
-        let target = $(this);
-        let formData = new FormData(this);
-        formData.append('action', 'abptf_save_global_date');
-        formData.append('nonce', abptf_admin_data.nonce);
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(target);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_toast_msg(response.data.msg, response.data.type);
-                window.location.reload();
-            }
-        });
-    });
+//==========import=================//
     $(document).on('click', 'div.abptf_admin button.import_dates', function () {
         let parent = $(this).closest('.date_configuration');
         let target = parent.find('.date_content');
@@ -348,30 +390,11 @@ function abptf_get_form_data(form_area) {
                 if (response.data) {
                     if (response.data.hasOwnProperty('html')) {
                         target.html(response.data.html).promise().done(function () {
-                            abptf_admin_init(target);
+                            abptf_init(target);
                         });
                     }
                     abptf_toast_msg(response.data.msg, response.data.type);
                 }
-            }
-        });
-    });
-//==========Additional configuration=================//
-    $(document).on('submit', 'div.abptf_admin form.save_additional_service', function (e) {
-        e.preventDefault();
-        let target = $(this);
-        let formData = new FormData(this);
-        formData.append('action', 'abptf_save_additional_service');
-        formData.append('nonce', abptf_admin_data.nonce);
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(target);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_toast_msg(response.data.msg, 'success');
-                abptf_spinner_remove(target);
             }
         });
     });
@@ -388,30 +411,11 @@ function abptf_get_form_data(form_area) {
                 if (response.data) {
                     if (response.data.hasOwnProperty('html')) {
                         target.html(response.data.html).promise().done(function () {
-                            abptf_admin_init(target);
+                            abptf_init(target);
                         });
                     }
                     abptf_toast_msg(response.data.msg, response.data.type);
                 }
-            }
-        });
-    });
-//==========Client Form configuration=================//
-    $(document).on('submit', 'div.abptf_admin form.save_client_form', function (e) {
-        e.preventDefault();
-        let target = $(this);
-        let formData = new FormData(this);
-        formData.append('action', 'abptf_save_client_form');
-        formData.append('nonce', abptf_admin_data.nonce);
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(target);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_toast_msg(response.data.msg, 'success');
-                abptf_spinner_remove(target);
             }
         });
     });
@@ -428,308 +432,11 @@ function abptf_get_form_data(form_area) {
                 if (response.data) {
                     if (response.data.hasOwnProperty('html')) {
                         target.html(response.data.html).promise().done(function () {
-                            abptf_admin_init(target);
+                            abptf_init(target);
                         });
                     }
                     abptf_toast_msg(response.data.msg, response.data.type);
                 }
-            }
-        });
-    });
-    //==========category configuration=================//
-    $(document).on('click', 'div.abptf_admin button.save_category', function (e) {
-        e.preventDefault();
-        let $this = $(this);
-        let body = $('body .abp_post_config');
-        let target = (body.find("[name='abptf_post_id']").length > 0) ? body.find('.category_selection') : $('div.abptf_admin .category_list');
-        let form_area = $this.closest('.popup_body');
-        let formData = abptf_get_form_data(form_area);
-        formData.append('action', 'abptf_save_category');
-        jQuery.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(form_area);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_spinner_remove(form_area);
-                if (target && target.length > 0 && response.data && response.data.hasOwnProperty('html')) {
-                    target.html(response.data.html);
-                }
-                abptf_popup_close('#abptf_global_popup');
-                abptf_toast_msg(response.data.msg, 'success');
-            }
-        });
-    });
-    $(document).on('click', 'div.abptf_admin button.delete_category', function (e) {
-        e.preventDefault();
-        let parent = $(this).closest('.category_list');
-        let cat_id = parseInt($(this).attr('data-cat_id'));
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, data: {
-                "action": "abptf_delete_category", "cat_id": cat_id, 'nonce': abptf_admin_data.nonce
-            },
-            beforeSend: function () {
-                abptf_spinner(parent);
-                abptf_toast_msg(abptf_admin_data.msg.deleting, 'error');
-            },
-            success: function (response) {
-                abptf_spinner_remove(parent);
-                abptf_toast_msg(response.data.msg);
-                parent.html(response.data.html);
-            }
-        });
-    });
-    //==========Organizer configuration=================//
-    $(document).on('click', 'div.abptf_admin button.save_organizer', function (e) {
-        e.preventDefault();
-        let $this = $(this);
-        let body = $('body .abp_post_config');
-        let target = (body.find("[name='abptf_post_id']").length > 0) ? body.find('.organizer_selection') : $('div.abptf_admin .organizer_list');
-        let form_area = $this.closest('.popup_body');
-        let formData = abptf_get_form_data(form_area);
-        formData.append('action', 'abptf_save_organizer');
-        jQuery.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(form_area);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_spinner_remove(form_area);
-                if (target && target.length > 0 && response.data && response.data.hasOwnProperty('html')) {
-                    target.html(response.data.html);
-                }
-                abptf_popup_close('#abptf_global_popup');
-                abptf_toast_msg(response.data.msg, 'success');
-            }
-        });
-    });
-    $(document).on('click', 'div.abptf_admin button.delete_organizer', function (e) {
-        e.preventDefault();
-        let parent = $(this).closest('.organizer_list');
-        let cat_id = parseInt($(this).attr('data-cat_id'));
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, data: {
-                "action": "abptf_delete_organizer", "cat_id": cat_id, 'nonce': abptf_admin_data.nonce
-            },
-            beforeSend: function () {
-                abptf_spinner(parent);
-                abptf_toast_msg(abptf_admin_data.msg.deleting, 'error');
-            },
-            success: function (response) {
-                abptf_spinner_remove(parent);
-                abptf_toast_msg(response.data.msg);
-                parent.html(response.data.html);
-            }
-        });
-    });
-    //==========location configuration=================//
-    $(document).on('click', 'div.abptf_admin button.save_location', function (e) {
-        e.preventDefault();
-        let $this = $(this);
-        let target = $('div.abptf_admin .location_list');
-        let form_area = $this.closest('.popup_body');
-        let formData = abptf_get_form_data(form_area);
-        formData.append('action', 'abptf_save_location');
-        jQuery.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(form_area);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_spinner_remove(form_area);
-                if (target && target.length > 0 && response.data && response.data.hasOwnProperty('html')) {
-                    target.html(response.data.html);
-                } else {
-                    if (response.data.hasOwnProperty('location_js')) {
-                        abptf_location_info = response.data.location_js;
-                        abptf_location_selection();
-                    }
-                }
-                abptf_popup_close('#abptf_global_popup');
-                abptf_toast_msg(response.data.msg, 'success');
-            }
-        });
-    });
-    $(document).on('click', 'div.abptf_admin button.delete_location', function (e) {
-        e.preventDefault();
-        let parent = $(this).closest('.location_list');
-        let loc_id = parseInt($(this).attr('data-loc_id'));
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, data: {
-                "action": "abptf_delete_location", "loc_id": loc_id, 'nonce': abptf_admin_data.nonce
-            },
-            beforeSend: function () {
-                abptf_spinner(parent);
-                abptf_toast_msg(abptf_admin_data.msg.deleting, 'error');
-            },
-            success: function (response) {
-                abptf_spinner_remove(parent);
-                abptf_toast_msg(response.data.msg);
-                parent.html(response.data.html);
-            }
-        });
-    });
-    //==========brand configuration=================//
-    $(document).on('click', 'div.abptf_admin button.save_brand', function (e) {
-        e.preventDefault();
-        let $this = $(this);
-        let body = $('body .abp_post_config');
-        let form_area = $this.closest('.popup_body');
-        let target = (body.find("[name='abptf_post_id']").length > 0) ? body.find('.brand_selection') : $('div.abptf_admin .brand_list');
-        let formData = abptf_get_form_data(form_area);
-        formData.append('action', 'abptf_save_brand');
-        jQuery.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(form_area);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_spinner_remove(form_area);
-                if (target && target.length > 0 && response.data && response.data.hasOwnProperty('html')) {
-                    target.html(response.data.html);
-                }
-                abptf_popup_close('#abptf_global_popup');
-                abptf_toast_msg(response.data.msg, 'success');
-            }
-        });
-    });
-    $(document).on('click', 'div.abptf_admin button.delete_brand', function (e) {
-        e.preventDefault();
-        let parent = $(this).closest('.brand_list');
-        let brand_id = parseInt($(this).attr('data-id'));
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, data: {
-                "action": "abptf_delete_brand", "brand_id": brand_id, 'nonce': abptf_admin_data.nonce
-            },
-            beforeSend: function () {
-                abptf_spinner(parent);
-                abptf_toast_msg(abptf_admin_data.msg.deleting, 'error');
-            },
-            success: function (response) {
-                abptf_spinner_remove(parent);
-                abptf_toast_msg(response.data.msg);
-                parent.html(response.data.html);
-            }
-        });
-    });
-    //==========feature configuration=================//
-    $(document).on('click', 'div.abptf_admin button.save_feature', function (e) {
-        e.preventDefault();
-        let $this = $(this);
-        let form_area = $this.closest('.popup_body');
-        let target = $('div.abptf_admin .feature_list');
-        let formData = abptf_get_form_data(form_area);
-        formData.append('action', 'abptf_save_feature');
-        jQuery.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(form_area);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_spinner_remove(form_area);
-                abptf_popup_close('#abptf_global_popup');
-                abptf_toast_msg(response.data.msg, 'success');
-                if (target && target.length > 0 && response.data && response.data.hasOwnProperty('html')) {
-                    target.html(response.data.html);
-                } else {
-                    if (response.data.hasOwnProperty('feature_js')) {
-                        abptf_feature_data = response.data.feature_js;
-                        new ABPTF_Multi_Selection('div.abptf_admin .post_feature', abptf_feature_data);
-                    }
-                }
-            }
-        });
-    });
-    $(document).on('click', 'div.abptf_admin button.delete_feature', function (e) {
-        e.preventDefault();
-        let target = $(this);
-        let parent = target.closest('.feature_area');
-        let fec_id = $(this).attr('data-fec_id');
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, data: {
-                "action": "abptf_delete_feature", "fec_id": fec_id, 'nonce': abptf_admin_data.nonce
-            },
-            beforeSend: function () {
-                abptf_spinner(parent);
-                abptf_toast_msg(abptf_admin_data.msg.deleting, 'error');
-            },
-            success: function (response) {
-                abptf_spinner_remove(parent);
-                abptf_toast_msg(response.data.msg);
-                parent.find('.feature_list').html(response.data.html);
-            }
-        });
-    });
-    //==========Ticket type configuration=================//
-    $(document).on('click', 'div.abptf_admin button.save_ticket_types', function (e) {
-        e.preventDefault();
-        let $this = $(this);
-        let form_area = $this.closest('.popup_body');
-        let target = $('div.abptf_admin .ticket_list');
-        let formData = abptf_get_form_data(form_area);
-        formData.append('action', 'abptf_save_ticket_type');
-        jQuery.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(form_area);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_spinner_remove(form_area);
-                abptf_popup_close('#abptf_global_popup');
-                abptf_toast_msg(response.data.msg, 'success');
-                if (target && target.length > 0 && response.data && response.data.hasOwnProperty('html')) {
-                    target.html(response.data.html);
-                } else {
-                    // if (response.data.hasOwnProperty('feature_js')) {
-                    //     abptf_feature_data = response.data.feature_js;
-                    //     new ABPTF_Multi_Selection('div.abptf_admin .post_feature', abptf_feature_data);
-                    // }
-                }
-            }
-        });
-    });
-    $(document).on('click', 'div.abptf_admin button.delete_ticket', function (e) {
-        e.preventDefault();
-        let target = $(this);
-        let parent = target.closest('.ticket_configuration');
-        let id = $(this).attr('data-id');
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, data: {
-                "action": "abptf_delete_ticket_type", "id": id, 'nonce': abptf_admin_data.nonce
-            },
-            beforeSend: function () {
-                abptf_spinner(parent);
-                abptf_toast_msg(abptf_admin_data.msg.deleting, 'error');
-            },
-            success: function (response) {
-                abptf_spinner_remove(parent);
-                abptf_toast_msg(response.data.msg);
-                parent.find('.ticket_list').html(response.data.html);
-            }
-        });
-    });
-    //==========Faq configuration=================//
-    $(document).on('submit', 'div.abptf_admin form.save_faq', function (e) {
-        e.preventDefault();
-        let target = $(this);
-        let formData = new FormData(this);
-        formData.append('action', 'abptf_save_faqs');
-        formData.append('nonce', abptf_admin_data.nonce);
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(target);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_toast_msg(response.data.msg, 'success');
-                window.location.reload();
             }
         });
     });
@@ -746,29 +453,11 @@ function abptf_get_form_data(form_area) {
                 if (response.data) {
                     if (response.data.hasOwnProperty('html')) {
                         target.html(response.data.html).promise().done(function () {
-                            abptf_admin_init(target);
+                            abptf_init(target);
                         });
                     }
                     abptf_toast_msg(response.data.msg, response.data.type);
                 }
-            }
-        });
-    });
-    $(document).on('submit', 'div.abptf_admin form.save_tc', function (e) {
-        e.preventDefault();
-        let target = $(this);
-        let formData = new FormData(this);
-        formData.append('action', 'abptf_save_tc');
-        formData.append('nonce', abptf_admin_data.nonce);
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, contentType: false, processData: false, data: formData,
-            beforeSend: function () {
-                abptf_spinner(target);
-                abptf_toast_msg(abptf_admin_data.msg.saving);
-            },
-            success: function (response) {
-                abptf_toast_msg(response.data.msg, 'success');
-                window.location.reload();
             }
         });
     });
@@ -785,11 +474,25 @@ function abptf_get_form_data(form_area) {
                 if (response.data) {
                     if (response.data.hasOwnProperty('html')) {
                         target.html(response.data.html).promise().done(function () {
-                            abptf_admin_init(target);
+                            abptf_init(target);
                         });
                     }
                     abptf_toast_msg(response.data.msg, response.data.type);
                 }
+            }
+        });
+    });
+    $(document).on('click', 'div.abptf_admin button.import_dummy', function () {
+        let parent = $(this).closest('.abptf_status');
+        $.ajax({
+            type: 'POST', url: abptf_admin_data.ajax_url, data: {
+                "action": "abptf_import_dummy", 'nonce': abptf_admin_data.nonce
+            }, beforeSend: function () {
+                abptf_spinner(parent);
+                abptf_toast_msg(abptf_admin_data.msg.importing);
+            }, success: function (response) {
+                abptf_toast_msg(response.data.msg, 'success');
+                window.location.reload();
             }
         });
     });
@@ -838,28 +541,11 @@ function abptf_get_form_data(form_area) {
             }
         });
     });
-    //==========Dummy data configuration=================//
-    $(document).on('click', 'div.abptf_admin button.import_dummy', function () {
-        let parent = $(this).closest('.abptf_status');
-        $.ajax({
-            type: 'POST', url: abptf_admin_data.ajax_url, data: {
-                "action": "abptf_import_dummy", 'nonce': abptf_admin_data.nonce
-            }, beforeSend: function () {
-                abptf_spinner(parent);
-                abptf_toast_msg(abptf_admin_data.msg.importing);
-            }, success: function (response) {
-                abptf_toast_msg(response.data.msg, 'success');
-                window.location.reload();
-            }
-        });
-    });
-    //=================================================//
 }(jQuery));
 //==============Empty title check /image selection/add_new_delete============================//
 (function ($) {
     'use strict';
     $(document).ready(function () {
-        abptf_admin_init();
         //=========== Feature  selection=================//
         new ABPTF_Multi_Selection('div.abptf_admin .post_feature', abptf_feature_data);
         //=========== Related post  selection=================//
@@ -883,6 +569,48 @@ function abptf_get_form_data(form_area) {
             }
         }
     });
+    //==================image selection========================//
+    let abptf_media_uploader;
+    window.abptf_image_remove = function ($this) {
+        $this = $($this);
+        let parent = $this.closest('.image_selection');
+        if (parent && parent.length > 0) {
+            parent.find('input').val('');
+            parent.find('img').attr('src', '');
+            parent.find('button').slideDown('fast');
+            parent.find('.image_item').slideUp('fast');
+            let id = parent.find('input').attr('data-target');
+            let target = $(id);
+            if (target && target.length > 0) {
+                $(target).css('background-image', '');
+            }
+        }
+    };
+    window.abptf_image_selection = function ($this) {
+        $this = $($this);
+        if (!abptf_media_uploader) {
+            abptf_media_uploader = wp.media({
+                multiple: false
+            });
+            abptf_media_uploader.on('select', function () {
+                let attachment = abptf_media_uploader.state().get('selection').first().toJSON();
+                let parent = abptf_media_uploader.current_target;
+                if (parent && parent.length > 0) {
+                    parent.find('input').val(attachment.id);
+                    parent.find('img').attr('src', attachment.url);
+                    parent.find('button').slideUp('fast');
+                    parent.find('.image_item').slideDown('fast');
+                    let id = parent.find('input').attr('data-target');
+                    let target = $(id);
+                    if (target && target.length > 0) {
+                        $(target).css('background-image', `url(${attachment.url})`);
+                    }
+                }
+            });
+        }
+        abptf_media_uploader.current_target = $this.closest('.image_selection');
+        abptf_media_uploader.open();
+    };
     //==================image selection========================//
     $(document).on('click', 'div.abptf_admin .add_image', function () {
         let parent = $(this);
@@ -982,16 +710,16 @@ function abptf_get_form_data(form_area) {
         e.stopPropagation();
         e.stopImmediatePropagation();
         let parent = $(this).closest('.configuration_content');
-        let target_element = $(this).next('.abptf_d_none');
+        let target_element = $(this).next('.abp_hidden');
         if (target_element.length === 0) {
-            target_element = parent.children('.abptf_d_none');
+            target_element = parent.children('.abp_hidden');
         }
         if (target_element.length === 0) {
-            target_element = parent.find('.abptf_d_none').first();
+            target_element = parent.find('.abp_hidden').first();
         }
         let item = target_element.find('.hidden_content').html();
         if (!item || item === "undefined" || item === " ") {
-            target_element = parent.find('.abptf_d_none').first();
+            target_element = parent.find('.abp_hidden').first();
             item = target_element.find('.hidden_content').html();
         }
         if (target_element.attr('data-hidden_id') !== undefined) {
@@ -1015,7 +743,7 @@ function abptf_get_form_data(form_area) {
             insertable_area = parent.find('.insertable_area').first();
         }
         let target = insertable_area.find('.delete_area').last();
-        abptf_admin_init(target);
+        abptf_init(target);
         target.find('.edit_area').slideDown('fast');
         parent.find('.hide_on_load').slideDown(300);
         $(this).trigger('abp_trigger');

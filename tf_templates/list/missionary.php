@@ -4,7 +4,7 @@
 	}
 	add_action( 'abptf_missionary_template', function ( $params = [] ) {
 		//echo '<pre>';print_r($params);echo '</pre>';
-		$global_order = $abptf_infos['global_order'] ?? '';
+		$global_order = $post_infos['global_order'] ?? '';
 		$post_ids     = $params['all_post'] ?? [];
 		if ( ! empty( $post_ids ) && sizeof( $post_ids ) > 0 ) {
 			$column            = $params['column'] ?? 3;

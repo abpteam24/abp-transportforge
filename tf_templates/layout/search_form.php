@@ -2,14 +2,14 @@
 	if ( ! defined( 'ABSPATH' ) ) {
 		exit; // Exit if accessed directly
 	}
-	add_action( 'abptf_search_form_template', function ( $abptf_infos = [] ) {
-		$admin_order  = $abptf_infos['admin_order'] ?? '';
-		$global_order = $abptf_infos['global_order'] ?? '';
-		$post_id      = absint( $abptf_infos['post_id'] ?? 0 );
-		$location     = $abptf_infos['abptf_location'] ?? '';
-		$params_form  = $abptf_infos['form'] ?? 'inline';
+	add_action( 'abptf_search_form_template', function ( $post_infos = [] ) {
+		$admin_order  = $post_infos['admin_order'] ?? '';
+		$global_order = $post_infos['global_order'] ?? '';
+		$post_id      = absint( $post_infos['post_id'] ?? 0 );
+		$location     = $post_infos['abptf_location'] ?? '';
+		$params_form  = $post_infos['form'] ?? 'inline';
 		$brand_icon   = ABPTF_Function::icon();
-		$rent_rule    = $abptf_infos['rent_rule'] ?? null;
+		$rent_rule    = $post_infos['rent_rule'] ?? null;
 		if ( empty( $rent_rule ) && $post_id > 0 ) {
 			$rent_rule = ABPTF_Function::get_post_info( $post_id, 'rent_rule' );
 		}

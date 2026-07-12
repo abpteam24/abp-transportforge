@@ -26,13 +26,13 @@
 					$rent_rule                      = $post_val( 'rent_rule' );
 					$location                       = $post_val( 'location' );
 					$date_info                      = ABPTF_Function::get_date_time_difference( $start_time, $end_time, $rent_rule );
-					$abptf_infos['post_id']         = $post_id;
-					$abptf_infos['start_time']      = $start_time;
-					$abptf_infos['end_time']        = $end_time;
-					$abptf_infos['rent_rule']       = $rent_rule;
-					$abptf_infos['location']        = $location;
-					$abptf_infos['date_info']       = $date_info;
-					$ticket_info                    = self::get_ticket_info( $abptf_infos );
+					$post_infos['post_id']         = $post_id;
+					$post_infos['start_time']      = $start_time;
+					$post_infos['end_time']        = $end_time;
+					$post_infos['rent_rule']       = $rent_rule;
+					$post_infos['location']        = $location;
+					$post_infos['date_info']       = $date_info;
+					$ticket_info                    = self::get_ticket_info( $post_infos );
 					$additional_infos               = self::get_additional_info( $post_id );
 					$rent_price                     = self::get_price( $ticket_info );
 					$ex_price                       = self::get_additional_price( $additional_infos );
@@ -113,16 +113,16 @@
 
 				return $item_data;
 			}
-			public static function get_ticket_info( $abptf_infos = [] ) {
+			public static function get_ticket_info( $post_infos = [] ) {
 				$booking_info = [];
 				if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'abptf_registration_nonce' ) ) {
 					$post_int_array = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'absint', wp_unslash( $_POST[ $key ] ) ) : [];
 					$post_array     = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST[ $key ] ) ) : [];
-					$post_id        = $abptf_infos['post_id'] ?? '';
-					$start_time     = $abptf_infos['start_time'] ?? '';
-					$end_time       = $abptf_infos['end_time'] ?? '';
-					$rent_rule      = $abptf_infos['rent_rule'] ?? '';
-					$date_info      = $abptf_infos['date_info'] ?? [];
+					$post_id        = $post_infos['post_id'] ?? '';
+					$start_time     = $post_infos['start_time'] ?? '';
+					$end_time       = $post_infos['end_time'] ?? '';
+					$rent_rule      = $post_infos['rent_rule'] ?? '';
+					$date_info      = $post_infos['date_info'] ?? [];
 					$property_ids   = $post_int_array( 'property_id' );
 					$property_check = $post_array( 'property_check' );
 					$property_qty   = $post_int_array( 'property_qty' );
@@ -134,13 +134,13 @@
 								if ( ! empty( $check ) && ! empty( $property_id ) && ! empty( $qty ) ) {
 									$property = current( ABPTF_Query::get_property( [ 'property_id' => $property_id ] ) );
 									if ( ! empty( $property ) ) {
-										$abptf_infos['property_id']              = $property_id;
-										$abptf_infos['qty']                      = $qty;
-										$price                                   = ABPTF_Function::get_price( $abptf_infos, $property );
-										$abptf_infos['price']                    = $price;
+										$post_infos['property_id']              = $property_id;
+										$post_infos['qty']                      = $qty;
+										$price                                   = ABPTF_Function::get_price( $post_infos, $property );
+										$post_infos['price']                    = $price;
 										$booking_info[ $property_id ]['name']    = $property['name'] ?? '';
 										$booking_info[ $property_id ]['price']   = $price;
-										$booking_info[ $property_id ]['deposit'] = ABPTF_Function::get_deposit_price( $abptf_infos, $property );
+										$booking_info[ $property_id ]['deposit'] = ABPTF_Function::get_deposit_price( $post_infos, $property );
 										$booking_info[ $property_id ]['qty']     = $qty;
 										$booking_info[ $property_id ]['brand']   = $property['brand'] ?? '';
 									}
@@ -199,16 +199,16 @@
 						$services = ABPTF_Function::get_post_info( $post_id, 'abptf_additional', [] );
 					}
 					if ( $display == 'on' && sizeof( $services ) > 0 ) {
-						$abptf_infos['display_additional_services'] = $display;
-						$abptf_infos['active_global_additional']    = $active_global_additional;
-						$abptf_infos['abptf_additional']            = $services;
+						$post_infos['display_additional_services'] = $display;
+						$post_infos['active_global_additional']    = $active_global_additional;
+						$post_infos['abptf_additional']            = $services;
 						foreach ( $services as $id => $service ) {
 							$name     = isset( $_POST[ 'name_' . $id ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'name_' . $id ] ) ) : '';
 							$quantity = isset( $_POST[ 'qty_' . $id ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'qty_' . $id ] ) ) : '';
 							if ( ! empty( $name ) && ! empty( $quantity ) && $quantity > 0 ) {
 								$infos[ $id ]['name']       = $name;
 								$infos[ $id ]['qty']        = $quantity;
-								$infos[ $id ]['price']      = ABPTF_Function::get_additional_price( $post_id, $name, $abptf_infos );
+								$infos[ $id ]['price']      = ABPTF_Function::get_additional_price( $post_id, $name, $post_infos );
 								$infos[ $id ]['icon']       = $service['icon'] ?? '';
 								$infos[ $id ]['returnable'] = $service['returnable'] ?? 'no';
 							}
@@ -308,18 +308,18 @@
 					if ( get_post_type( $post_id ) == ABPTF_Function::get_cpt() ) {
 						$location                  = $cart_item['location'] ?? '';
 						$rent_rule                 = $cart_item['rent_rule'] ?? '';
-						$abptf_infos['post_id']    = $cart_item['post_id'] ?? '';
-						$abptf_infos['rent_rule']  = $rent_rule;
-						$abptf_infos['start_time'] = $cart_item['start_time'] ?? '';
-						$abptf_infos['end_time']   = $cart_item['end_time'] ?? '';
-						$abptf_infos['location']   = $location;
+						$post_infos['post_id']    = $cart_item['post_id'] ?? '';
+						$post_infos['rent_rule']  = $rent_rule;
+						$post_infos['start_time'] = $cart_item['start_time'] ?? '';
+						$post_infos['end_time']   = $cart_item['end_time'] ?? '';
+						$post_infos['location']   = $location;
 						$ticket_infos              = $cart_item['ticket_info'] ?? [];
-						if ( sizeof( $ticket_infos ) > 0 && ABPTF_Function::check_date_exit( $abptf_infos ) ) {
+						if ( sizeof( $ticket_infos ) > 0 && ABPTF_Function::check_date_exit( $post_infos ) ) {
 							foreach ( $ticket_infos as $id => $ticket_info ) {
 								$qty = $ticket_info['qty'] ?? '';
 								if ( ! empty( $qty ) && $qty > 0 ) {
-									$abptf_infos['property_id'] = $id;
-									$sold_qty                   = ABPTF_Query::get_sold_qty( $abptf_infos );
+									$post_infos['property_id'] = $id;
+									$sold_qty                   = ABPTF_Query::get_sold_qty( $post_infos );
 									$property                   = current( ABPTF_Query::get_property( [ 'property_id' => $id ] ) );
 									$price_qty_info             = json_decode( $property['price_qty_info'] ?? '', true ) ?: [];
 									$price_qty_info             = ( ! empty( $location ) && isset( $price_qty_info[ $location ] ) ) ? $price_qty_info[ $location ] : $price_qty_info;

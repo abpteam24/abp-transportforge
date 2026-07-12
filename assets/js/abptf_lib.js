@@ -1,18 +1,34 @@
-function abptf_init(target = jQuery('div.abptf_area')) {
+window.abptf_parent = window.abptf_parent || jQuery('div.abptf_area');
+function abptf_init(target = abptf_parent) {
     abptf_load_tabs(target);
     abptf_load_more(target);
     abptf_load_image(target);
     abptf_load_datepicker(target);
+    abptf_sortable(target);
+    abptf_color_picker_init(target);
+    abptf_wp_editor_init(target);
+    abptf_location_selection(target);
+    abptf_toast_init(target);
+    abptf_init_dynamic_date_pickers();
 }
-function abptf_load_more($searchScope = jQuery('div.abptf_area')) {
-    let $containers = $searchScope.find('.load_more');
+function abptf_load_tabs(parent = abptf_parent) {
+    if (parent.find('.abptf_tabs').length === 0) return;
+    parent.find('.abptf_tabs').each(function () {
+        let tab_lists = jQuery(this).find('.tab_lists:first');
+        let activeTab = tab_lists.find('[data-tabs-target].abp_active');
+        let targetTab = activeTab.length > 0 ? activeTab : tab_lists.find('[data-tabs-target]').first();
+        targetTab.trigger('click');
+    });
+}
+function abptf_load_more(parent = abptf_parent) {
+    let $containers = parent.find('.load_more');
     if ($containers.length === 0) return;
     $containers.each(function () {
         let $container = jQuery(this);
         let $toggleBtn = $container.find('.load_more_action');
         if ($toggleBtn.length === 0) return;
-        let textMore = $toggleBtn.attr('data-more') || '... Load More';
-        let textLess = $toggleBtn.attr('data-less') || ' ....Show Less';
+        let textMore = $toggleBtn.attr('data-more') || '... More';
+        let textLess = $toggleBtn.attr('data-less') || ' ....Less';
         let rawElement = $container[0];
         if (rawElement.scrollHeight <= rawElement.clientHeight) {
             $toggleBtn.hide();
@@ -29,21 +45,9 @@ function abptf_load_more($searchScope = jQuery('div.abptf_area')) {
         });
     });
 }
-function abptf_load_datepicker(parent = jQuery('.abptf_area')) {
-    parent.find(".abp_datepicker.hasDatepicker").each(function () {
-        jQuery(this).removeClass('hasDatepicker').attr('id', '').removeData('datepicker').unbind();
-    }).promise().done(function () {
-        parent.find(".abp_datepicker").datepicker({
-            dateFormat: abptf_var.date_format, autoSize: true, changeMonth: true, changeYear: true, //showButtonPanel: true,
-            onSelect: function (dateString, data) {
-                let date = data.selectedYear + '-' + ('0' + (parseInt(data.selectedMonth) + 1)).slice(-2) + '-' + ('0' + parseInt(data.selectedDay)).slice(-2);
-                jQuery(this).closest('label').find('input[type="hidden"]').val(date).trigger('change');
-            }
-        });
-    });
-}
-function abptf_load_image(body = jQuery('div.abptf_area')) {
-    body.find('[data-image-href]:visible').each(function () {
+function abptf_load_image(parent = abptf_parent) {
+    if (parent.find('[data-image-href]:visible').length === 0) return;
+    parent.find('[data-image-href]:visible').each(function () {
         let target = jQuery(this);
         let bg_url = target.data('image-href');
         target.attr('data-image-href', '');
@@ -58,15 +62,84 @@ function abptf_load_image(body = jQuery('div.abptf_area')) {
     });
     return true;
 }
-function abptf_load_tabs(body = jQuery('div.abptf_area')) {
-    body.find('.abptf_tabs').each(function () {
-        let tab_lists = jQuery(this).find('.tab_lists:first');
-        let activeTab = tab_lists.find('[data-tabs-target].abp_active');
-        let targetTab = activeTab.length > 0 ? activeTab : tab_lists.find('[data-tabs-target]').first();
-        targetTab.trigger('click');
+function abptf_load_datepicker(parent = abptf_parent) {
+    if (parent.find(".abp_datepicker").length === 0) return;
+    parent.find(".abp_datepicker.hasDatepicker").each(function () {
+        jQuery(this).removeClass('hasDatepicker').attr('id', '').removeData('datepicker').unbind();
+    }).promise().done(function () {
+        parent.find(".abp_datepicker").datepicker({
+            dateFormat: abptf_var.date_format, autoSize: true, changeMonth: true, changeYear: true, //showButtonPanel: true,
+            onSelect: function (dateString, data) {
+                let date = data.selectedYear + '-' + ('0' + (parseInt(data.selectedMonth) + 1)).slice(-2) + '-' + ('0' + parseInt(data.selectedDay)).slice(-2);
+                jQuery(this).closest('label').find('input[type="hidden"]').val(date).trigger('change');
+            }
+        });
     });
 }
-function abptf_init_all_dynamic_datepickers(newSelector = null, newConfig = null) {
+function abptf_sortable(target = abptf_parent) {
+    let $sortable = target.find('.sortable_area:not(.abp_hidden *)');
+    if ($sortable.length === 0) {
+        $sortable = target.closest('.sortable_area');
+    }
+    if ($sortable.length > 0) {
+        $sortable.sortable({
+            handle: '.sortable_handle',
+            stop: function (event, ui) {
+                ui.item.trigger('abp_trigger');
+            }
+        });
+    }
+}
+function abptf_color_picker_init(target = abptf_parent) {
+    let $pickers = target.find('.abp_color_picker:not(.abp_hidden *)');
+    if ($pickers.length > 0) {
+        $pickers.wpColorPicker({
+            change: function (event, ui) {
+                setTimeout(function () {
+                    jQuery(event.target).trigger('abp_trigger');
+                }, 50);
+            },
+            clear: function (event) {
+                setTimeout(function () {
+                    jQuery(event.target).trigger('abp_trigger');
+                }, 50);
+            }
+        });
+    }
+}
+function abptf_wp_editor_init(target = abptf_parent) {
+    let textArea = target.find('textarea.wp-editor-area:not(.abp_hidden *)');
+    if (textArea.length > 0) {
+        let uniqueId = 'editor_' + Math.random().toString(36).substring(2, 11);
+        if (target.find('.wp-editor-wrap').length > 0) {
+            target.find('.wp-editor-wrap').replaceWith(textArea);
+        }
+        textArea.attr('id', uniqueId).show();
+        setTimeout(function () {
+            if (typeof wp !== 'undefined' && wp.editor) {
+                wp.editor.remove(uniqueId);
+                wp.editor.initialize(uniqueId, {
+                    tinymce: {
+                        wpautop: true,
+                        cleanup: false,
+                        verify_html: false,
+                        entity_encoding: 'raw',
+                        forced_root_block: false,
+                        valid_elements: '*[*]',
+                        setup: function (editor) {
+                            editor.on('change', function () {
+                                editor.save();
+                            });
+                        }
+                    },
+                    quicktags: true,
+                    mediaButtons: true
+                });
+            }
+        }, 100);
+    }
+}
+function abptf_init_dynamic_date_pickers(newSelector = null, newConfig = null) {
     window.abptf_picker_data = window.abptf_picker_data || {};
     if (newSelector && newConfig) {
         window.abptf_picker_data[newSelector] = newConfig;
@@ -104,6 +177,23 @@ function abptf_init_all_dynamic_datepickers(newSelector = null, newConfig = null
         }
     });
 }
+function abptf_toast_init(target = abptf_parent) {
+    if (abptf_parent.find('.toast_msg_area').length === 0) {
+        abptf_parent.first().append('<div class="toast_msg_area"></div>');
+    }
+    let toast_notices = abptf_parent.find('.toast_notice');
+    if (toast_notices.length > 0) {
+        toast_notices.each(function (index) {
+            let current_notice = $(this);
+            let type = current_notice.attr('data-type') || 'info';
+            let msg = current_notice.html();
+            setTimeout(function () {
+                abptf_toast_msg(msg, type);
+            }, index * 600);
+        });
+    }
+}
+//=============================================================================Load initial=================//
 function abptf_alert($this, attr = 'alert') {
     alert($this.data(attr));
 }
@@ -141,36 +231,20 @@ function abptf_wc_price_format(price) {
     }
     return price_text;
 }
-function abptf_spinner(target) {
-    if (target.find('.abptf_spinner').length < 1) {
-        target.addClass('_p_relative').append('<div class="abptf_spinner"></div>');
+function abptf_spinner(parent = abptf_parent) {
+    if (parent.find('.abp_spinner').length < 1) {
+        parent.addClass('_p_relative').append('<div class="abp_spinner"></div>');
     }
 }
-function abptf_spinner_remove(target = jQuery('body')) {
-    target.removeClass('_p_relative').find('.abptf_spinner').remove();
+function abptf_spinner_remove(parent = abptf_parent) {
+    parent.removeClass('_p_relative').find('.abp_spinner').remove();
 }
-//=============================================================================Load initial=================//
 (function ($) {
     "use strict";
     $(document).ready(function () {
-        abptf_init_all_dynamic_datepickers();
         $('body').find('div.abptf_area [data-image-href]').each(function () {
             abptf_spinner($(this));
         });
-        if ($('.toast_msg_area').length === 0) {
-            $('div.abptf_area').first().append('<div class="toast_msg_area"></div>');
-        }
-        let toast_notices = $('body div.abptf_area ').find('.toast_notice');
-        if (toast_notices.length > 0) {
-            toast_notices.each(function (index) {
-                let current_notice = $(this);
-                let type = current_notice.attr('data-type') || 'info';
-                let msg = current_notice.html();
-                setTimeout(function () {
-                    abptf_toast_msg(msg, type);
-                }, index * 600);
-            });
-        }
         abptf_init();
     });
     //======================================================================Outer Close==========//
@@ -316,7 +390,7 @@ function abptf_popup_close(target_id = '') {
 }
 (function ($) {
     "use strict";
-    $(document).on('click', 'div.abptf_area [data-tabs-target]', function () {
+    abptf_parent.on('click', '[data-tabs-target]', function () {
         if (!$(this).hasClass('abp_active')) {
             let tabsTarget = $(this).data('tabs-target');
             let parent = $(this).closest('.abptf_tabs');
@@ -340,8 +414,7 @@ function abptf_popup_close(target_id = '') {
             });
         }
     });
-    //================//
-    $(document).on('click', 'div.abptf_area [data-target-popup]', function () {
+    abptf_parent.on('click', '[data-target-popup]', function () {
         let $this = $(this);
         let target = $this.attr('data-active-popup', '').data('target-popup');
         $('body').addClass('_stop_scroll').find('[data-popup="' + target + '"]').addClass('in').promise().done(function () {
@@ -350,15 +423,14 @@ function abptf_popup_close(target_id = '') {
             return true;
         });
     });
-    $(document).on('click', 'div.abptf_popup  .popup_close', function () {
+    abptf_parent.on('click', '.popup_close', function () {
         let $this = $(this);
         $this.closest('[data-popup]').removeClass('in');
         $('body').removeClass('_stop_scroll').find('[data-active-popup]').removeAttr('data-active-popup');
         $this.trigger('abp_trigger');
         return true;
     });
-    //================//
-    $(document).on('click', 'div.abptf_area [data-collapse-target]', function () {
+    abptf_parent.on('click', '[data-collapse-target]', function () {
         let currentTarget = $(this);
         let target_id = currentTarget.attr('data-collapse-target');
         let close_id = currentTarget.attr('data-close-target');
@@ -367,7 +439,7 @@ function abptf_popup_close(target_id = '') {
             abptf_data_change(currentTarget);
         }
     });
-    $(document).on('change', '.abptf_area select[data-collapse-target]', function () {
+    abptf_parent.on('click', 'select[data-collapse-target]', function () {
         let currentTarget = $(this);
         let value = currentTarget.val();
         currentTarget.find('option').each(function () {

@@ -30,7 +30,7 @@
 				$form_html = ob_get_clean();
 				ob_start();
 				if ( ! empty( $post_id ) ) {
-					$abptf_infos = ABPTF_Function::get_all_meta( $post_id );
+					$post_infos = ABPTF_Function::get_all_meta( $post_id );
 					$rent_rule   = $post_val( 'rent_rule' );
 					$rent_rule   = ! empty( $rent_rule ) ? $rent_rule : ABPTF_Function::get_post_info( $post_id, 'rent_rule' );
 					if ( ! empty( $rent_rule ) && $rent_rule != 'monthly' ) {
@@ -44,7 +44,7 @@
 					if ( $rent_rule == 'hourly' || $rent_rule == 'multi_day' ) {
 						$all_time = ABPTF_Function::get_time( $post_id, 'js' );
 					}
-					do_action( 'abptf_registration', $abptf_infos );
+					do_action( 'abptf_registration', $post_infos );
 					$msg = get_the_title( $post_id ) . ' ' . __( 'Loaded Successfully.....! ', 'abp-transportforge' );
 				} else {
 					$params['all_post'] = ABPTF_Query::get_post_id( $params );
@@ -62,7 +62,7 @@
 				}
 				$post_int                    = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? absint( $_POST[ $key ] ) : $default;
 				$post_val                    = fn( $key, $default = '' ) => isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : $default;
-				$abptf_infos                 = [];
+				$post_infos                 = [];
 				$post_id                     = $post_int( 'post_id' );
 				$rent_start_date             = $post_val( 'rent_start_date' );
 				$rent_end_date               = $post_val( 'rent_end_date' );
@@ -75,15 +75,15 @@
 				$filter_arg['status']        = 'publish';
 				$date_info                   = [];
 				if ( ! empty( $post_id ) ) {
-					$abptf_infos['post_id'] = $post_id;
+					$post_infos['post_id'] = $post_id;
 					$filter_arg['post_id']  = $post_id;
 				}
 				if ( ! empty( $rent_rule ) ) {
-					$abptf_infos['rent_rule'] = $rent_rule;
+					$post_infos['rent_rule'] = $rent_rule;
 					$filter_arg['rent_rule']  = $rent_rule;
 				}
 				if ( ! empty( $location ) ) {
-					$abptf_infos['location'] = $location;
+					$post_infos['location'] = $location;
 					$filter_arg['location']  = $location;
 				}
 				$properties = ABPTF_Query::get_property( $filter_arg );
@@ -108,10 +108,10 @@
 					$end       = $rent_end_date;
 					$date_info = ABPTF_Function::get_date_time_difference( $start, $end, $rent_rule );
 				}
-				$abptf_infos['start_time'] = $start;
-				$abptf_infos['end_time']   = $end;
-				$abptf_infos['date_info']  = $date_info;
-				$check_date                = ABPTF_Function::check_date_exit( $abptf_infos );
+				$post_infos['start_time'] = $start;
+				$post_infos['end_time']   = $end;
+				$post_infos['date_info']  = $date_info;
+				$check_date                = ABPTF_Function::check_date_exit( $post_infos );
 				ob_start();
 				if ( ! empty( $post_id ) && ! empty( $properties ) && $check_date ) {
 					$template = ABPTF_Function::get_post_info( $post_id, 'abptf_template', 'grid' );
@@ -124,10 +124,10 @@
 					<?php
 					if ( empty( $template ) || 'grid' === $template ) {
 						foreach ( $properties as $property ) {
-							do_action( 'abptf_property_item', $abptf_infos, $property );
+							do_action( 'abptf_property_item', $post_infos, $property );
 						}
 					} else {
-						do_action( 'abptf_property_item_group', $abptf_infos, $properties );
+						do_action( 'abptf_property_item_group', $post_infos, $properties );
 					}
 				} else {
 					ABPTF_Layout::layout_warning_info( 'no_property_found' );
@@ -135,13 +135,13 @@
 				$property_info = ob_get_clean();
 				ob_start();
 				if ( ! empty( $post_id ) && $check_date ) {
-					do_action( 'abptf_additional', $post_id, $abptf_infos );
-					do_action( 'abptf_client_form', $post_id, $abptf_infos );
-					do_action( 'abptf_total_price', $abptf_infos );
+					do_action( 'abptf_additional', $post_id, $post_infos );
+					do_action( 'abptf_client_form', $post_id, $post_infos );
+					do_action( 'abptf_total_price', $post_infos );
 				}
 				$property_others = ob_get_clean();
 				ob_start();
-				do_action( 'abptf_duration', $abptf_infos );
+				do_action( 'abptf_duration', $post_infos );
 				$date_details = ob_get_clean();
 				wp_send_json_success( [
 					'property_info' => $property_info,

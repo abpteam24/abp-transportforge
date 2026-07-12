@@ -2,18 +2,18 @@
 	if ( ! defined( 'ABSPATH' ) ) {
 		exit; // Exit if accessed directly
 	}
-	add_action( 'abptf_additional_template', function ( $post_id, $abptf_infos = [] ) {
+	add_action( 'abptf_additional_template', function ( $post_id, $post_infos = [] ) {
 		if ( ABPTF_Function::on_off( 'additional_info' ) ) {
 			$post_id = absint( $post_id );
 			if ( $post_id <= 0 ) {
 				return;
 			}
-			$display                  = $abptf_infos['display_additional_services'] ?? ABPTF_Function::get_post_info( $post_id, 'display_additional_services', 'on' );
-			$active_global_additional = $abptf_infos['active_global_additional'] ?? ABPTF_Function::get_post_info( $post_id, 'active_global_additional', 'on' );
+			$display                  = $post_infos['display_additional_services'] ?? ABPTF_Function::get_post_info( $post_id, 'display_additional_services', 'on' );
+			$active_global_additional = $post_infos['active_global_additional'] ?? ABPTF_Function::get_post_info( $post_id, 'active_global_additional', 'on' );
 			if ( $active_global_additional === 'on' ) {
 				$additional_services = ABPTF_Function::get_option( 'abptf_additional' );
 			} else {
-				$additional_services = $abptf_infos['abptf_additional'] ?? ABPTF_Function::get_post_info( $post_id, 'abptf_additional', [] );
+				$additional_services = $post_infos['abptf_additional'] ?? ABPTF_Function::get_post_info( $post_id, 'abptf_additional', [] );
 			}
 			if ( $display === 'on' && ! empty( $additional_services ) && is_array( $additional_services ) ) {
 				$ex_count = 0;
@@ -38,8 +38,8 @@
 							}
 							$sold_qty = 0;
 							if ( $qty < 9999 ) {
-								$abptf_infos['ex_id'] = $id;
-								$sold_qty             = ABPTF_Query::get_sold_qty_ex( $abptf_infos );
+								$post_infos['ex_id'] = $id;
+								$sold_qty             = ABPTF_Query::get_sold_qty_ex( $post_infos );
 							}
 							$available = $qty - $sold_qty;
 							$max_qty   = ! empty( $max_qty ) ? min( $max_qty, $available ) : $available;

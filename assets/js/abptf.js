@@ -146,10 +146,10 @@
                 if (response.data && response.data.hasOwnProperty('form') && response.data.hasOwnProperty('details')) {
                     target_form.html(response.data.form).promise().done(function () {
                         if (response.data.hasOwnProperty('start_date') && $('#start_date').length > 0) {
-                            abptf_init_all_dynamic_datepickers('#start_date', response.data.start_date);
+                            abptf_init_dynamic_date_pickers('#start_date', response.data.start_date);
                         }
                         if (response.data.hasOwnProperty('end_date') && $('#end_date').length > 0) {
-                            abptf_init_all_dynamic_datepickers('#end_date', response.data.end_date);
+                            abptf_init_dynamic_date_pickers('#end_date', response.data.end_date);
                         }
                     });
                     abptf_time_slot_infos = response.data.time_info;
@@ -220,7 +220,7 @@
                 if (response.data && response.data.hasOwnProperty('html')) {
                     target.html(response.data.html).promise().done(function () {
                         if (response.data.hasOwnProperty('picker_config') && response.data.picker_config) {
-                            abptf_init_all_dynamic_datepickers(response.data.selector, response.data.picker_config);
+                            abptf_init_dynamic_date_pickers(response.data.selector, response.data.picker_config);
                         } else {
                             abptf_load_datepicker(target);
                         }

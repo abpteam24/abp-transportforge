@@ -2,18 +2,18 @@
 	if ( ! defined( 'ABSPATH' ) ) {
 		exit; // Exit if accessed directly
 	}
-	add_action( 'abptf_client_form_template', function ( $post_id, $abptf_infos = [] ) {
+	add_action( 'abptf_client_form_template', function ( $post_id, $post_infos = [] ) {
 		if ( ABPTF_Function::on_off( 'client_info' ) ) {
 			$post_id = absint( $post_id );
 			if ( $post_id <= 0 ) {
 				return;
 			}
-			$display       = $abptf_infos['display_client_form'] ?? ABPTF_Function::get_post_info( $post_id, 'display_client_form', 'on' );
-			$active_global = $abptf_infos['active_global_form'] ?? ABPTF_Function::get_post_info( $post_id, 'active_global_form', 'on' );
+			$display       = $post_infos['display_client_form'] ?? ABPTF_Function::get_post_info( $post_id, 'display_client_form', 'on' );
+			$active_global = $post_infos['active_global_form'] ?? ABPTF_Function::get_post_info( $post_id, 'active_global_form', 'on' );
 			if ( $active_global === 'on' ) {
 				$forms = ABPTF_Function::get_option( 'abptf_forms' );
 			} else {
-				$forms = $abptf_infos['abptf_forms'] ?? ABPTF_Function::get_post_info( $post_id, 'abptf_forms', [] );
+				$forms = $post_infos['abptf_forms'] ?? ABPTF_Function::get_post_info( $post_id, 'abptf_forms', [] );
 			}
 			if ( $display === 'on' && ! empty( $forms ) && is_array( $forms ) ) {
 				?>

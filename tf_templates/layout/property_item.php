@@ -2,12 +2,12 @@
 	if ( ! defined( 'ABSPATH' ) ) {
 		exit; // Exit if accessed directly
 	}
-	add_action( 'abptf_property_item_template', function ( $abptf_infos, $property = [] ) {
+	add_action( 'abptf_property_item_template', function ( $post_infos, $property = [] ) {
 		//echo '<pre>';print_r($property);echo '</pre>';
 		if ( is_array( $property ) && sizeof( $property ) > 0 ) {
-			$location       = $abptf_infos['location'] ?? '';
-			$start_time     = $abptf_infos['start_time'] ?? '';
-			$end_time       = $abptf_infos['end_time'] ?? '';
+			$location       = $post_infos['location'] ?? '';
+			$start_time     = $post_infos['start_time'] ?? '';
+			$end_time       = $post_infos['end_time'] ?? '';
 			$post_id        = $property['post_id'] ?? '';
 			$cat_id         = ABPTF_Function::get_post_info( $post_id, 'abptf_category' );
 			$loc_id         = ABPTF_Function::get_post_info( $post_id, 'abptf_location' );
@@ -19,14 +19,14 @@
 			$price_info = $price_qty_info[ $rent_rule ] ?? [];
 			$others     = json_decode( $property['others'] ?? '', true ) ?: [];
 			if ( ! empty( $rent_rule ) && ! empty( $price_info ) ) {
-				$time_duration                = ABPTF_Function::time_duration( $abptf_infos, $price_info );
-				$total_price                  = ABPTF_Function::get_price( $abptf_infos, $property, $time_duration );
+				$time_duration                = ABPTF_Function::time_duration( $post_infos, $price_info );
+				$total_price                  = ABPTF_Function::get_price( $post_infos, $property, $time_duration );
 				$property_name                = $property['name'] ?? '';
-				$abptf_infos['property_name'] = $property_name;
-				$abptf_infos['property_id']   = $property['id'] ?? '';
+				$post_infos['property_name'] = $property_name;
+				$post_infos['property_id']   = $property['id'] ?? '';
 				//echo '<pre>';print_r($property );echo '</pre>';
 				?>
-                <div class="property_item item_box_1 <?php echo esc_attr( $abptf_infos['add_class'] ?? '' ); ?>" data-cat_id="<?php echo esc_attr( $cat_id ); ?>" data-loc_id="<?php echo esc_attr( $loc_id ); ?>">
+                <div class="property_item item_box_1 <?php echo esc_attr( $post_infos['add_class'] ?? '' ); ?>" data-cat_id="<?php echo esc_attr( $cat_id ); ?>" data-loc_id="<?php echo esc_attr( $loc_id ); ?>">
                     <div class="item_head">
 						<?php ABPTF_Layout::image_icon( ($others['icon'] ?? ''),'' ); ?>
                     </div>
@@ -48,16 +48,16 @@
                                 </div>
 								<?php ABPTF_Layout::item_deposit( $price_info );
 									if ( ! empty( $start_time ) && ! empty( $end_time ) ) {
-										ABPTF_Layout::item_cost( $abptf_infos, $price_info, $total_price, $time_duration );
+										ABPTF_Layout::item_cost( $post_infos, $price_info, $total_price, $time_duration );
 									}
 								?>
                             </div>
                         </div>
 						<?php
 							if ( ! empty( $time_duration ) && ! empty( $start_time ) && ! empty( $end_time ) ) {
-								ABPTF_Layout::item_select_property( $abptf_infos, $price_info, $total_price );
+								ABPTF_Layout::item_select_property( $post_infos, $price_info, $total_price );
 							}
-							if ( $abptf_infos['add_class'] ?? '' ) { ?>
+							if ( $post_infos['add_class'] ?? '' ) { ?>
                                 <div>
                                     <div class="_divider_xs"></div>
                                     <button type="button" class="_btn_theme_xs" data-href="<?php echo esc_url( get_the_permalink( $post_id ) ); ?>" data-blank="_blank">
