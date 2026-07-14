@@ -106,7 +106,7 @@
                     </div>
                     <div class="_divider_xs"></div>
                     <div class="_fj_between">
-                        <?php ABPTF_Layout::button_add_xs(__('Add New Form Item', 'abp-transportforge'));
+                        <?php ABPTF_Layout::button_add(__('Add New Form Item', 'abp-transportforge'));
                             if ($global) {
                                 ABPTF_Layout::button_global_save('form_config',__('Save Global Client Form Configuration', 'abp-transportforge'));
                             } ?>

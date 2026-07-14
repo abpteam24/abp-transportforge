@@ -34,6 +34,7 @@
 	div.abptf_admin .abp_dropdown [class*="_form_control"] {max-width: 100%;}
 	div.abptf_admin .additional_service [class*="_form_control"],
 	div.abptf_admin .faq_configuration [class*="_form_control"],
+	div.abptf_admin .ticket_configuration [class*="_form_control"],
 	div.abptf_admin .feature_area [class*="_form_control"] {min-width: auto;width: 100%;max-width: 100%;}
 	div.abptf_admin .abptf_routing [class*="_form_control"] {min-height: 30px;}
 	/*=============================*/

@@ -50,6 +50,7 @@
 						'deleting' => __('Deleting.............', 'abp-transportforge'),
 						'delete_success' => __('Item Deleted Successfully............. !', 'abp-transportforge'),
 						'select_stops' => __('Select Stops..', 'abp-transportforge'),
+						'select_ticket' => __('Select Ticket Type..', 'abp-transportforge'),
 						'property_loading' => __('Property List Loading.............', 'abp-transportforge'),
 						'post_loading' => $label . ' ' . __('List Loading.............', 'abp-transportforge'),
 						'post_deleting' => $label . ' ' . __('Permanent Deleting.........!', 'abp-transportforge'),
@@ -211,6 +212,7 @@
 					require_once ABPTF_DIR . 'admin/abptf_admin.php';
 					require_once ABPTF_DIR . 'admin/abptf_post.php';
 					require_once ABPTF_DIR . 'admin/abptf_routing.php';
+					require_once ABPTF_DIR . 'admin/abptf_ticket.php';
 					require_once ABPTF_DIR . 'admin/abptf_dashboard.php';
 					require_once ABPTF_DIR . 'admin/abptf_orders.php';
 					require_once ABPTF_DIR . 'admin/abptf_dates.php';

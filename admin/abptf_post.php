@@ -173,16 +173,19 @@
                             <div class="_panel_head">
                                 <ul class="_abp tab_lists">
                                     <li data-tabs-target="#abptf_general"><span class="fas fa-rainbow"></span><?php esc_html_e('General', 'abp-transportforge'); ?></li>
-                                    <li data-tabs-target="#abptf_routing"><span class="fas fa-route"></span><?php esc_html_e('Route Configuration', 'abp-transportforge'); ?></li>
-                                    <li data-tabs-target="#abptf_dates"><span>🗓️</span><?php esc_html_e('Date & Time', 'abp-transportforge'); ?></li>
+                                    <li data-tabs-target="#abptf_routing"><span class="fas fa-route"></span><?php esc_html_e('Route', 'abp-transportforge'); ?></li>
+                                    <li data-tabs-target="#abptf_ticket"><span class="_mar_r_xxs">🎫 </span><?php esc_html_e('Ticket', 'abp-transportforge'); ?></li>
+                                    <li data-tabs-target="#abptf_price"><span class="_mar_r_xxs">💲 </span><?php esc_html_e(' Price', 'abp-transportforge'); ?></li>
+                                    <li data-tabs-target="#abptf_dates"><span class="_mar_r_xxs">🗓️</span><?php esc_html_e('Date', 'abp-transportforge'); ?></li>
+                                    <li data-tabs-target="#abptf_times"><span class="_mar_r_xxs">⏰</span><?php esc_html_e('Time', 'abp-transportforge'); ?></li>
                                     <?php if (ABPTF_Function::on_off('additional_info')) { ?>
-                                        <li data-tabs-target="#abptf_additional_service"><span>💰</span><?php esc_html_e('Additional services', 'abp-transportforge'); ?></li>
+                                        <li data-tabs-target="#abptf_additional_service"><span class="_mar_r_xxs">💰</span><?php esc_html_e('Additional services', 'abp-transportforge'); ?></li>
                                     <?php } ?>
                                     <?php if (ABPTF_Function::on_off('client_info')) { ?>
-                                        <li data-tabs-target="#abptf_client_form"><span>📋</span><?php esc_html_e('Client Form', 'abp-transportforge'); ?></li>
+                                        <li data-tabs-target="#abptf_client_form"><span class="_mar_r_xxs">📋</span><?php esc_html_e('Client Form', 'abp-transportforge'); ?></li>
                                     <?php } ?>
                                     <?php do_action('abptf_post_tab_menu', $post_infos); ?>
-                                    <li data-tabs-target="#abptf_resource"><span>📚</span><?php esc_html_e('Resources', 'abp-transportforge'); ?></li>
+                                    <li data-tabs-target="#abptf_resource"><span class="_mar_r_xxs">📚</span><?php esc_html_e('Resources', 'abp-transportforge'); ?></li>
                                 </ul>
                             </div>
                             <div class="tab_content _panel_body">
@@ -216,7 +219,7 @@
                         <div class="setting_item">
                             <label class="_f_equal_f_wrap">
                                 <span class="_abp_label"><?php esc_html_e('Template', 'abp-transportforge'); ?></span>
-                                <select class="_form_control " name="abptf_template" data-collapse-target required>
+                                <select class="_form_control " name="abptf_template"  required>
                                     <option disabled selected><?php esc_html_e('Please Select', 'abp-transportforge'); ?></option>
                                     <option value="default" <?php echo esc_attr($abptf_template == 'default' ? 'selected' : ''); ?>><?php esc_html_e('Default Template', 'abp-transportforge'); ?></option>
                                     <option value="light" <?php echo esc_attr($abptf_template == 'light' ? 'selected' : ''); ?>><?php esc_html_e('Light Template', 'abp-transportforge'); ?></option>
@@ -387,7 +390,7 @@
                     $post_html = fn($key, $default = '') => isset($_POST[$key]) ? wp_kses_post(wp_unslash($_POST[$key])) : $default;
                     $post_int_array = fn($key) => (isset($_POST[$key]) && is_array($_POST[$key])) ? array_map('absint', wp_unslash($_POST[$key])) : [];
                     $post_array = fn($key) => (isset($_POST[$key]) && is_array($_POST[$key])) ? array_map('sanitize_text_field', wp_unslash($_POST[$key])) : [];
-                    //$post_textarea_array = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'sanitize_textarea_field', wp_unslash( $_POST[ $key ] ) ) : [];
+                    $post_textarea_array = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'sanitize_textarea_field', wp_unslash( $_POST[ $key ] ) ) : [];
                     //$post_html_array     = fn( $key ) => ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) ? array_map( 'wp_kses_post', wp_unslash( $_POST[ $key ] ) ) : [];
                     //$format_date         = fn( $date ) => $date ? gmdate( 'Y-m-d', strtotime( $date ) ) : '';
                     $route_infos = [];
@@ -428,12 +431,12 @@
                         }
                     }
                     /***********************************/
-                    $display_return=$post_val('display_return', 'off');
+                    $display_return = $post_val('display_return', 'off');
                     $return_route_infos = [];
                     $return_route_direction = [];
                     $return_bp = [];
                     $return_dp = [];
-                    if($display_return=='on') {
+                    if ($display_return == 'on') {
                         $stops = $post_int_array('return_stop_name');
                         $types = $post_array('return_stop_type');
                         $display_pd = $post_array('return_display_pd');
@@ -469,6 +472,32 @@
                         }
                     }
                     /***********************************/
+                    $seat_type = $post_val('seat_type');
+                    $display_ticket_type = $post_val('display_ticket_type');
+                    $ticket_infos=[];
+                    if ($seat_type == 'ticket') {
+                        $ticket_ids = $post_array('ticket_name');
+                        $ticket_icon = $post_array('ticket_icon');
+                        $ticket_qty = $post_array('ticket_qty');
+                        $ticket_max_qty = $post_array('ticket_max_qty');
+                        $ticket_description = $post_textarea_array('ticket_description');
+                        if (!empty($ticket_ids)) {
+                            foreach ($ticket_ids as $key => $id) {
+                                if (!empty($id)) {
+                                    $ticket_infos[$id] = [
+                                        'icon' => $ticket_icon[$key] ?? '',
+                                        'qty' => $ticket_qty[$key] ?? '',
+                                        'max_qty' => $ticket_max_qty[$key] ?? '',
+                                        'description' => $ticket_description[$key] ?? '',
+                                    ];
+                                }
+                            }
+                        }
+                        if($display_ticket_type == 'off' && !empty($ticket_infos)){
+                            $ticket_infos = array_slice($ticket_infos, 0, 1, true);
+                        }
+                    }
+                    /***********************************/
                     $operation_time = [];
                     $operation_times = $post_array('operation_time');
                     if (!empty($operation_times)) {
@@ -478,36 +507,106 @@
                             }
                         }
                     }
-                    $day_time = [];
-                    foreach (ABPTF_Layout::week_day() as $key => $day) {
-                        $time = $post_val($key . '_time');
-                        if ($time) {
-                            $day_time[$key] = $time;
+                    $time_info['operation_time'] = !empty($operation_time) ? $operation_time : ['00:00'];
+                    $opt_time = $post_val('operation_time_optional');
+                    $opt_time = !empty($opt_time) ? explode(',', $opt_time) : [];
+                    if (in_array('day_wise_time', $opt_time)) {
+                        $day_time = [];
+                        foreach (ABPTF_Layout::week_day() as $key => $day) {
+                            $time = $post_val($key . '_time');
+                            if ($time) {
+                                $day_time[$key] = $time;
+                            }
                         }
+                        $time_info['day_time'] = $day_time;
                     }
-                    $date_time_ids = $post_array('date_wise_time_id');
-                    $date_time = [];
-                    if (!empty($date_time_ids)) {
-                        foreach ($date_time_ids as $time_id) {
-                            $date_wise_dates = $post_array('date_wise_date[' . $time_id . ']');
-                            $date_wise_time = $post_array('date_wise_time[' . $time_id . ']');
-                            if (!empty($date_wise_dates) && !empty($date_wise_time)) {
-                                foreach ($date_wise_dates as $value) {
-                                    if (!empty($value)) {
-                                        $date_time[$time_id]['date'] = $value;
-                                        foreach ($date_wise_time as $value2) {
-                                            if (!empty($value2)) {
-                                                $date_time[$time_id]['time'][] = $value2;
+                    if (in_array('date_wise_time', $opt_time)) {
+                        $date_time_ids = $post_array('date_wise_time_id');
+                        $date_time = [];
+                        if (!empty($date_time_ids)) {
+                            foreach ($date_time_ids as $time_id) {
+                                $date_wise_dates = $post_array('date_wise_date[' . $time_id . ']');
+                                $date_wise_time = $post_array('date_wise_time[' . $time_id . ']');
+                                if (!empty($date_wise_dates) && !empty($date_wise_time)) {
+                                    foreach ($date_wise_dates as $value) {
+                                        if (!empty($value)) {
+                                            $date_time[$time_id]['date'] = $value;
+                                            foreach ($date_wise_time as $value2) {
+                                                if (!empty($value2)) {
+                                                    $date_time[$time_id]['time'][] = $value2;
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
+                        $time_info['date_times'] = $date_time;
                     }
-                    $time_info['operation_time'] = !empty($operation_time) ? $operation_time : ['00:00'];
-                    $time_info['day_time'] = $day_time;
-                    $time_info['date_times'] = $date_time;
+                    /***********************************/
+                    $return_time_info = [];
+                    if ($display_return == 'on') {
+                        $operation_time = [];
+                        $operation_times = $post_array('return_operation_time');
+                        if (!empty($operation_times)) {
+                            foreach ($operation_times as $value) {
+                                if (!empty($value)) {
+                                    $operation_time[] = $value;
+                                }
+                            }
+                        }
+                        $return_time_info['return_operation_time'] = !empty($operation_time) ? $operation_time : ['00:00'];
+                        $opt_time = $post_val('return_operation_time_optional');
+                        $opt_time = !empty($opt_time) ? explode(',', $opt_time) : [];
+                        if (in_array('return_day_wise_time', $opt_time)) {
+                            $day_time = [];
+                            foreach (ABPTF_Layout::week_day() as $key => $day) {
+                                $time = $post_val('return_' . $key . '_time');
+                                if ($time) {
+                                    $day_time[$key] = $time;
+                                }
+                            }
+                            $return_time_info['day_time'] = $day_time;
+                        }
+                        if (in_array('return_date_wise_time', $opt_time)) {
+                            $date_time_ids = $post_array('return_date_wise_time_id');
+                            $date_time = [];
+                            if (!empty($date_time_ids)) {
+                                foreach ($date_time_ids as $time_id) {
+                                    $date_wise_dates = $post_array('return_date_wise_date[' . $time_id . ']');
+                                    $date_wise_time = $post_array('return_date_wise_time[' . $time_id . ']');
+                                    if (!empty($date_wise_dates) && !empty($date_wise_time)) {
+                                        foreach ($date_wise_dates as $value) {
+                                            if (!empty($value)) {
+                                                $date_time[$time_id]['date'] = $value;
+                                                foreach ($date_wise_time as $value2) {
+                                                    if (!empty($value2)) {
+                                                        $date_time[$time_id]['time'][] = $value2;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            $return_time_info['date_times'] = $date_time;
+                        }
+                    }
+                    /***********************************/
+                    $active_global_dates = $post_val('active_global_dates', 'on');
+                    $abptf_dates = $active_global_dates == 'on' ? [] : apply_filters('abptf_get_date_array', []);
+                    $display_additional_services = $post_val('display_additional_services', 'off');
+                    $active_global_additional = $display_additional_services == 'on' ? $post_val('active_global_additional', 'on') : 'off';
+                    $additional_services = ($active_global_additional == 'on' || $display_additional_services == 'off') ? [] : apply_filters('abptf_get_additional_array', []);
+                    $display_client_form = $post_val('display_client_form', 'off');
+                    $active_global_form = $display_client_form == 'on' ? $post_val('active_global_form', 'on') : 'off';
+                    $abptf_forms = ($active_global_form == 'on' || $display_client_form == 'off') ? [] : apply_filters('abptf_get_form_array', []);
+                    $display_faq = $post_val('display_faq', 'off');
+                    $active_global_faq = $display_faq == 'on' ? $post_val('active_global_faq', 'on') : 'off';
+                    $abptf_faqs = ($active_global_faq == 'on' || $display_faq == 'off') ? [] : apply_filters('abptf_get_faq_array', []);
+                    $display_tc = $post_val('display_tc', 'off');
+                    $active_global_tc = $display_tc == 'on' ? $post_val('active_global_tc', 'on') : 'off';
+                    $abptf_tc = ($active_global_tc == 'on' || $display_tc == 'off') ? [] : $post_html('tc_content');
                     $meta_info = [
                         'sale_continue' => $post_val('sale_continue', 'on'),
                         'abptf_template' => $post_val('abptf_template', 'default'),
@@ -536,21 +635,26 @@
                         'return_abptf_bp' => $return_bp,
                         'return_abptf_dp' => $return_dp,
                         //================//
-                        'active_global_dates' => $post_val('active_global_dates', 'on'),
-                        'abptf_dates' => apply_filters('abptf_get_date_array', []),
+                        'seat_type' => $seat_type,
+                        'display_ticket_type' => $display_ticket_type,
+                        'ticket_infos' => $ticket_infos,
+                        //================//
+                        'active_global_dates' => $active_global_dates,
+                        'abptf_dates' => $abptf_dates,
                         'time_infos' => $time_info,
-                        'display_additional_services' => $post_val('display_additional_services', 'off'),
-                        'active_global_additional' => $post_val('active_global_additional', 'on'),
-                        'additional_services' => apply_filters('abptf_get_additional_array', []),
-                        'display_client_form' => $post_val('display_client_form', 'off'),
-                        'active_global_form' => $post_val('active_global_form', 'on'),
-                        'abptf_forms' => apply_filters('abptf_get_form_array', []),
-                        'display_faq' => $post_val('display_faq', 'on'),
-                        'active_global_faq' => $post_val('active_global_faq', 'on'),
-                        'abptf_faqs' => apply_filters('abptf_get_faq_array', []),
-                        'display_tc' => $post_val('display_tc', 'on'),
-                        'active_global_tc' => $post_val('active_global_tc', 'on'),
-                        'abptf_tc' => $post_html('tc_content'),
+                        'return_time_infos' => $return_time_info,
+                        'display_additional_services' => $display_additional_services,
+                        'active_global_additional' => $active_global_additional,
+                        'additional_services' => $additional_services,
+                        'display_client_form' => $display_client_form,
+                        'active_global_form' => $active_global_form,
+                        'abptf_forms' => $abptf_forms,
+                        'display_faq' => $display_faq,
+                        'active_global_faq' => $active_global_faq,
+                        'abptf_faqs' => $abptf_faqs,
+                        'display_tc' => $display_tc,
+                        'active_global_tc' => $active_global_tc,
+                        'abptf_tc' => $abptf_tc,
                     ];
                     //=============tax================//
                     if (get_option('woocommerce_calc_taxes') == 'yes') {

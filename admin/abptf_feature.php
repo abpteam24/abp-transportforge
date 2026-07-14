@@ -59,7 +59,7 @@
                         </table>
                         <div class="_divider_xs"></div>
                         <div class="_fj_between">
-                            <?php ABPTF_Layout::button_add_xs(__('Add New Feature Item', 'abp-transportforge')); ?>
+                            <?php ABPTF_Layout::button_add(__('Add New Feature Item', 'abp-transportforge')); ?>
                             <?php ABPTF_Layout::button_global_save('option_feature', $btn_label); ?>
                         </div>
                         <div class="abp_hidden">

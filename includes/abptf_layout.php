@@ -78,19 +78,10 @@
                 <?php
             }
             //==============================//
-            public static function button_add($button_text, $class = '', $button_class = '', $icon_class = '', $change_input_name = ''): void {
-                $class = $class ?: 'add_new_hook';
-                $button_class = $button_class ?: '_btn_default';
-                $icon_class = $icon_class ?: 'fas fa-plus';
-                ?>
-                <button class="<?php echo esc_attr($button_class . ' ' . $class); ?>" type="button">
-                    <span class="_mar_r_xs <?php echo esc_attr($icon_class); ?>"></span><span data-input-change="<?php echo esc_attr($change_input_name); ?>"><?php echo esc_html($button_text); ?></span>
-                </button>
-                <?php
-            }
-            public static function button_add_xs($button_text, $class = '', $button_class = ''): void {
+            public static function button_add($button_text, $class = '', $button_class = ''): void {
                 $class = $class ?: 'add_new_hook';
                 $button_class = $button_class ?: '_btn_light_active_xs';
+                $button_text = $button_text ?: __('Add New', 'abp-transportforge');
                 ?>
                 <button class="<?php echo esc_attr($button_class . ' ' . $class); ?>" type="button">
                     <span class="_mar_r_xxs">➕</span><?php echo esc_html($button_text); ?>
@@ -476,7 +467,7 @@
                             }
                         ?>
                     </div>
-                    <?php ABPTF_Layout::button_add_xs(__('Add  Image', 'abp-transportforge'), 'add_image_multi _mar_t_xs'); ?>
+                    <?php ABPTF_Layout::button_add(__('Add  Image', 'abp-transportforge'), 'add_image_multi _mar_t_xs'); ?>
                 </div>
                 <?php
             }
@@ -505,8 +496,8 @@
                     </div>
                     <div class="image_icon_select_area <?php echo esc_attr($button_active_class); ?>">
                         <div class="_group_content_f_equal_w_full">
-                            <button class="_btn_info_xs image_select" type="button"><span class="fas fa-image _fs_h6"></span></button>
-                            <button class="_btn_info_xs icon_add" type="button" data-target-popup="#abptf_popup_icon"><span class="fas fa-icons _fs_h6"></span></button>
+                            <button class="_btn_light_info_xs image_select" type="button"><span class="fas fa-image _fs_h6"></span></button>
+                            <button class="_btn_light_info_xs icon_add" type="button" data-target-popup="#abptf_popup_icon"><span class="fas fa-icons _fs_h6"></span></button>
                         </div>
                     </div>
                 </div>

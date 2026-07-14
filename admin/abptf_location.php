@@ -82,7 +82,7 @@
                             <div class="setting_item configuration_content full_width">
                                 <div class="_fj_between_fa_center">
                                     <span class="_abp_label"><?php esc_html_e('Multiple Pickup/drop-off Point', 'abp-transportforge'); ?></span>
-                                    <?php ABPTF_Layout::button_add_xs(__('Add New Pickup/drop-off Point', 'abp-transportforge')); ?>
+                                    <?php ABPTF_Layout::button_add(__('Add New Pickup/drop-off Point', 'abp-transportforge')); ?>
                                 </div>
                                 <div class="_divider_xs"></div>
                                 <div class="insertable_area sortable_area _gap_xs_f_wrap">

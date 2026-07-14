@@ -104,9 +104,9 @@
                     </div>
                     <div class="_divider_xs"></div>
                     <div class="_fj_between">
-                        <?php ABPTF_Layout::button_add_xs(__('Add New Additional services', 'abp-transportforge'));
+                        <?php ABPTF_Layout::button_add(__('Add New Additional services', 'abp-transportforge'));
                             if ($global) {
-                                ABPTF_Layout::button_global_save('global_additional',__('Save Global Additional services Configuration', 'abp-transportforge'));
+                                ABPTF_Layout::button_global_save('global_additional', __('Save Global Additional services Configuration', 'abp-transportforge'));
                             } ?>
                     </div>
                     <div class="abp_hidden">
@@ -131,7 +131,7 @@
                 <tr class="delete_area ">
                     <td> <?php do_action('abptf_add_image_icon', 'additional_icon[]', ($field['icon'] ?? '')); ?>  </td>
                     <td>
-                        <input type="hidden" name="additional_id[]" value="<?php echo esc_attr($key ?: uniqid()); ?>"/>
+                        <input type="hidden" name="additional_id[]" value="<?php echo esc_attr($key); ?>"/>
                         <label>
                             <input type="text" class="_form_control validation_name" name="additional_name[]" placeholder="<?php esc_attr_e('EX: Water Bottle', 'abp-transportforge'); ?>" value="<?php echo esc_attr($name); ?>"/>
                         </label>
@@ -191,20 +191,20 @@
                     $post_textarea_array = fn($key) => (isset($_POST[$key]) && is_array($_POST[$key])) ? array_map('sanitize_textarea_field', wp_unslash($_POST[$key])) : [];
                     $additional_ids = $post_array('additional_id');
                     $icon = $post_array('additional_icon');
-                    $name = $post_array('additional_name');
+                    $names = $post_array('additional_name');
                     $qty = $post_array('additional_qty');
                     $max_qty = $post_array('additional_max_qty');
                     $returnable = $post_array('additional_returnable');
                     $price = $post_array('additional_price');
                     $description = $post_textarea_array('additional_description');
-                    if (!empty($additional_ids)) {
-                        foreach ($additional_ids as $key => $additional_id) {
-                            $service_name = $name[$key] ?? '';
-                            if (!empty($service_name)) {
-                                $final_id = isset($additional_services[$additional_id]) ? uniqid() : $additional_id;
-                                $additional_services[$final_id] = [
+                    if (!empty($names)) {
+                        foreach ($names as $key => $name) {
+                            if (!empty($name)) {
+                                $id = $additional_ids[$key] ?? '';
+                                $id = empty($id) ?uniqid():$id;
+                                $additional_services[$id] = [
                                     'icon' => $icon[$key] ?? '',
-                                    'name' => $service_name,
+                                    'name' => $name,
                                     'qty' => $qty[$key] ?? '',
                                     'max_qty' => $max_qty[$key] ?? '',
                                     'price' => $price[$key] ?? '',

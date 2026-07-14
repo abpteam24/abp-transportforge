@@ -35,9 +35,9 @@
                                     <thead>
                                     <tr>
                                         <th class="_w_50"></th>
-                                        <th><span class="fas fa-route _mar_r_xs"></span><?php esc_html_e('Stops Name', 'abp-wc-transport-manager'); ?><sup class="_text_required">*</sup></th>
-                                        <th><?php esc_html_e('Stops Type', 'abp-wc-transport-manager'); ?><sup class="_text_required">*</sup></th>
-                                        <th><?php esc_html_e('Time(in min)', 'abp-wc-transport-manager'); ?><sup class="_text_required">*</sup></th>
+                                        <th><span class="fas fa-route _mar_r_xs"></span><?php esc_html_e('Stops Name', 'abp-wc-transport-manager'); ?><sup class="_color_required">*</sup></th>
+                                        <th><?php esc_html_e('Stops Type', 'abp-wc-transport-manager'); ?><sup class="_color_required">*</sup></th>
+                                        <th><?php esc_html_e('Time(in min)', 'abp-wc-transport-manager'); ?><sup class="_color_required">*</sup></th>
                                         <?php if (ABPTF_Function::on_off('pickup')) { ?>
                                             <th><?php esc_html_e('Pickup/Drop', 'abp-wc-transport-manager'); ?></th>
                                         <?php } ?>
@@ -56,7 +56,7 @@
                                 </table>
                             </div>
                             <div class="_divider_xs"></div>
-                            <?php ABPTF_Layout::button_add_xs(__('Add New Route', 'abp-wc-transport-manager')); ?>
+                            <?php ABPTF_Layout::button_add(__('Add New Route', 'abp-wc-transport-manager')); ?>
                             <div class="abp_hidden">
                                 <table class="_abp">
                                     <tbody class="hidden_content">
@@ -73,9 +73,9 @@
                                         <thead>
                                         <tr>
                                             <th class="_w_50"></th>
-                                            <th><span class="fas fa-route _mar_r_xs"></span><?php esc_html_e('Stops Name', 'abp-wc-transport-manager'); ?><sup class="_text_required">*</sup></th>
-                                            <th><?php esc_html_e('Stops Type', 'abp-wc-transport-manager'); ?><sup class="_text_required">*</sup></th>
-                                            <th><?php esc_html_e('Time(in min)', 'abp-wc-transport-manager'); ?><sup class="_text_required">*</sup></th>
+                                            <th><span class="fas fa-route _mar_r_xs"></span><?php esc_html_e('Stops Name', 'abp-wc-transport-manager'); ?><sup class="_color_required">*</sup></th>
+                                            <th><?php esc_html_e('Stops Type', 'abp-wc-transport-manager'); ?><sup class="_color_required">*</sup></th>
+                                            <th><?php esc_html_e('Time(in min)', 'abp-wc-transport-manager'); ?><sup class="_color_required">*</sup></th>
                                             <?php if (ABPTF_Function::on_off('pickup')) { ?>
                                                 <th><?php esc_html_e('Pickup/Drop', 'abp-wc-transport-manager'); ?></th>
                                             <?php } ?>
@@ -94,7 +94,7 @@
                                     </table>
                                 </div>
                                 <div class="_divider_xs"></div>
-                                <?php ABPTF_Layout::button_add_xs(__('Add New Return Route', 'abp-wc-transport-manager')); ?>
+                                <?php ABPTF_Layout::button_add(__('Add New Return Route', 'abp-wc-transport-manager')); ?>
                                 <div class="abp_hidden">
                                     <table class="_abp">
                                         <tbody class="hidden_content">

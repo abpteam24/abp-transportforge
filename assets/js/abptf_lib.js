@@ -8,6 +8,7 @@ function abptf_init(target = abptf_parent) {
     abptf_color_picker_init(target);
     abptf_wp_editor_init(target);
     abptf_location_selection(target);
+    abptf_ticket_type_selection(target);
     abptf_toast_init(target);
     abptf_init_dynamic_date_pickers();
 }
@@ -439,7 +440,7 @@ function abptf_popup_close(target_id = '') {
             abptf_data_change(currentTarget);
         }
     });
-    abptf_parent.on('click', 'select[data-collapse-target]', function () {
+    abptf_parent.on('change', 'select[data-collapse-target]', function () {
         let currentTarget = $(this);
         let value = currentTarget.val();
         currentTarget.find('option').each(function () {
@@ -478,7 +479,7 @@ function abptf_popup_close(target_id = '') {
         if (current.closest('.data_single_collapse').length > 0) {
             return current.closest('.data_single_collapse').find('[data-collapse="' + target_id + '"]');
         } else {
-            return $('[data-collapse="' + target_id + '"]');
+            return abptf_parent.find('[data-collapse="' + target_id + '"]');
         }
     }
     function target_close(close_id, target_id) {

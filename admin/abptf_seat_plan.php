@@ -23,18 +23,18 @@
             public function load_sp(): void {
                 ?>
                 <div class="group_setting">
-                    <?php if (ABPTF_Function::on_off('ticket_type')) { ?>
-                        <div class="ticket_configuration setting_item">
-                            <div class="_fj_between_fa_center">
-                                <h5 class="_abp"><?php esc_html_e('Ticket Type List', 'abp-transportforge'); ?></h5>
-                                <?php ABPTF_Layout::button_global_popup('ticket_type', __('Add New Ticket Type', 'abp-transportforge')); ?>
-                            </div>
-                            <div class="_divider_xxs"></div>
-                            <div class="ticket_type">
-                                <?php $this->ticket_list(); ?>
-                            </div>
+                    <div class="ticket_configuration setting_item">
+                        <div class="_fj_between_fa_center">
+                            <h5 class="_abp"><?php esc_html_e('Ticket Type List', 'abp-transportforge'); ?></h5>
+                            <?php if (ABPTF_Function::on_off('ticket_type')) {
+                                ABPTF_Layout::button_global_popup('ticket_type', __('Add New Ticket Type', 'abp-transportforge'));
+                            } ?>
                         </div>
-                    <?php } ?>
+                        <div class="_divider_xxs"></div>
+                        <div class="ticket_type">
+                            <?php $this->ticket_list(); ?>
+                        </div>
+                    </div>
                     <?php if (ABPTF_Function::on_off('sp')) { ?>
                         <div class="decor_configuration setting_item">
                             <div class="_fj_between_fa_center">
@@ -493,26 +493,33 @@
             /************************************/
             public function ticket_list(): void {
                 $options = ABPTF_Function::get_option('abptf_ticket');
-                //echo '<pre>';                print_r($options);                echo '</pre>';
-                if (sizeof($options) > 0) { ?>
+                if (count($options) > 0) { ?>
                     <div class="_group_list">
-                        <?php foreach ($options as $key => $item) {
-                            $label = $item['label'] ?? '';
-                            $prefix = $item['prefix'] ?? '';
-                            if (!empty($label)) { ?>
-                                <div class="_list_item">
-                                    <h6 class="_abp" style="color:<?php echo esc_attr($item['color'] ?? ''); ?>">
-                                        <?php ABPTF_Layout::image_icon($item['icon'] ?? '');
-                                            echo esc_html($label . ' ' . (!empty($prefix) ? '(' . $prefix . ')' : '')); ?>
-                                    </h6>
-                                    <div class="_group_content">
-                                        <button type="button" class="_btn_light_yellow_xxs" onclick="abptf_popup_open_global('ticket_type','<?php echo esc_attr($key); ?>')" title="<?php echo esc_attr__('Edit : ', 'abp-transportforge') . ' ' . esc_attr($label); ?>">✍️</button>
-                                        <button type="button" class="_btn_light_danger_xxs" onclick="abptf_delete_global('ticket_type','<?php echo esc_attr($key); ?>')" title="<?php echo esc_attr__('Trash : ', 'abp-transportforge') . ' ' . esc_attr($label); ?>">❌</button>
-                                    </div>
-                                </div>
-                                <?php
-                            }
-                        } ?>
+                        <?php
+                            $counter = 0;
+                            $is_on = ABPTF_Function::on_off('ticket_type');
+                            foreach ($options as $key => $item) {
+                                if ($is_on || $counter === 0) {
+                                    $label = $item['label'] ?? '';
+                                    $prefix = $item['prefix'] ?? '';
+                                    if (!empty($label)) { ?>
+                                        <div class="_list_item">
+                                            <h6 class="_abp" style="color:<?php echo esc_attr($item['color'] ?? ''); ?>">
+                                                <?php ABPTF_Layout::image_icon($item['icon'] ?? '');
+                                                    echo esc_html($label . ' ' . (!empty($prefix) ? '(' . $prefix . ')' : '')); ?>
+                                            </h6>
+                                            <div class="_group_content">
+                                                <button type="button" class="_btn_light_yellow_xxs" onclick="abptf_popup_open_global('ticket_type','<?php echo esc_attr($key); ?>')" title="<?php echo esc_attr__('Edit : ', 'abp-transportforge') . ' ' . esc_attr($label); ?>">✍️</button>
+                                                <button type="button" class="_btn_light_danger_xxs" onclick="abptf_delete_global('ticket_type','<?php echo esc_attr($key); ?>')" title="<?php echo esc_attr__('Trash : ', 'abp-transportforge') . ' ' . esc_attr($label); ?>">❌</button>
+                                            </div>
+                                        </div>
+                                        <?php
+                                    }
+                                    $counter++;
+                                } else {
+                                    break;
+                                }
+                            } ?>
                     </div>
                 <?php } else {
                     ABPTF_Layout::layout_warning_info_xs('no_ticket_type');
@@ -523,12 +530,10 @@
                     wp_send_json_error(['msg' => __('Invalid security token or Insufficient permissions.', 'abp-transportforge'), 'type' => 'warn'], 403);
                 }
                 ob_start();
-                $id = isset($_POST['id']) ? absint(wp_unslash($_POST['id'])) : '';
                 $options = ABPTF_Function::get_option('abptf_ticket');
-                $options = is_array($options) ? $options : [];
-                $ticket = !empty($id) ? ($options[$id] ?? []) : []; ?>
+                ?>
                 <div class="abp_form">
-                    <h5 class="_abp"><?php esc_html_e('Ticket Type List', 'abp-transportforge'); ?></h5>
+                    <h5 class="_abp"><?php esc_html_e('ADD / Edit Ticket Type', 'abp-transportforge'); ?></h5>
                     <?php ABPTF_Layout::info_text('ticket_image');
                         ABPTF_Layout::info_text('ticket_name');
                         ABPTF_Layout::info_text('ticket_color');
@@ -546,12 +551,20 @@
                             </tr>
                             </thead>
                             <tbody class="insertable_area sortable_area">
-                            <?php self::form_ticket($ticket, $id); ?>
+                            <?php
+                                if (!empty($options)) {
+                                    foreach ($options as $id => $ticket) {
+                                        self::form_ticket($ticket, $id);
+                                    }
+                                } else {
+                                    self::form_ticket();
+                                }
+                            ?>
                             </tbody>
                         </table>
                         <div class="_divider_xs"></div>
                         <div class="_fj_between">
-                            <?php ABPTF_Layout::button_add_xs(__('Add New Ticket Type Item', 'abp-transportforge')); ?>
+                            <?php ABPTF_Layout::button_add(__('Add New Ticket Type Item', 'abp-transportforge')); ?>
                             <?php ABPTF_Layout::button_global_save('ticket_type', __('Save Ticket Types', 'abp-transportforge')); ?>
                         </div>
                         <div class="abp_hidden">
@@ -573,8 +586,7 @@
                 }
                 $post_int = fn($key, $default = 0) => isset($_POST[$key]) ? absint($_POST[$key]) : $default;
                 $post_array = fn($key) => (isset($_POST[$key]) && is_array($_POST[$key])) ? array_map('sanitize_text_field', wp_unslash($_POST[$key])) : [];
-                $options = ABPTF_Function::get_option('abptf_ticket');
-                $options = is_array($options) ? $options : [];
+                $options = [];
                 $ids = $post_array('id');
                 $names = $post_array('name');
                 $icon = $post_array('icon');
@@ -584,15 +596,8 @@
                 if (!empty($names)) {
                     foreach ($names as $key => $name) {
                         if ($name !== '') {
-                            $old_id = isset($ids[$key]) ? (int)$ids[$key] : '';
-                            if (!empty($old_id) && isset($options[$old_id])) {
-                                $id = $old_id;
-                            } else {
-                                $id = 1;
-                                while (isset($options[$id])) {
-                                    $id++;
-                                }
-                            }
+                            $id = $ids[$key] ?? '';
+                            $id = empty($id) ? uniqid() : $id;
                             $options[$id] = [
                                 'label' => $name,
                                 'icon' => $icon[$key] ?? '',
@@ -603,7 +608,7 @@
                     }
                 }
                 if (empty($options)) {
-                    $options[1]['label'] = 'Ticket/Seat';
+                    $options[uniqid()]['label'] = 'Ticket/Seat';
                 }
                 update_option('abptf_ticket', $options);
                 $html = '';
@@ -623,13 +628,13 @@
                 if (!check_ajax_referer('abptf_admin_ajax_nonce', 'nonce', false) || !current_user_can('manage_options')) {
                     wp_send_json_error(['msg' => __('Invalid security token or Insufficient permissions.', 'abp-transportforge'), 'type' => 'warn'], 403);
                 }
-                $id = isset($_POST['id']) ? absint(wp_unslash($_POST['id'])) : 0;
+                $id = isset($_POST['id']) ? sanitize_text_field(wp_unslash($_POST['id'])) : 0;
                 $options = ABPTF_Function::get_option('abptf_ticket');
                 $options = is_array($options) ? $options : [];
                 if (!empty($id) && isset($options[$id])) {
                     unset($options[$id]);
                     if (empty($options)) {
-                        $options[1]['label'] = 'Ticket/Seat';
+                        $options[uniqid()]['label'] = 'Ticket/Seat';
                     }
                     update_option('abptf_ticket', $options);
                 }
@@ -737,7 +742,7 @@
                         </table>
                         <div class="_divider_xs"></div>
                         <div class="_fj_between">
-                            <?php ABPTF_Layout::button_add_xs(__('Add New Decor Item', 'abp-transportforge')); ?>
+                            <?php ABPTF_Layout::button_add(__('Add New Decor Item', 'abp-transportforge')); ?>
                             <?php ABPTF_Layout::button_global_save('decor_item', __('Save Decor items', 'abp-transportforge')); ?>
                         </div>
                         <div class="abp_hidden">

@@ -61,9 +61,9 @@
                     </div>
                     <div class="_divider_xs"></div>
                     <div class="_fj_between">
-                        <?php ABPTF_Layout::button_add_xs(__('Add New FAQ Item', 'abp-transportforge'));
+                        <?php ABPTF_Layout::button_add(__('Add New FAQ Item', 'abp-transportforge'));
                             if ($global) {
-                                ABPTF_Layout::button_global_save('faq_config',__('Save FAQs Configuration', 'abp-transportforge'));
+                                ABPTF_Layout::button_global_save('faq_config', __('Save FAQs Configuration', 'abp-transportforge'));
                             } ?>
                     </div>
                     <div class="abp_hidden">
@@ -143,44 +143,41 @@
                 $tax_classes = WC_Tax::get_tax_rate_classes();
                 $tax_class = $post_infos['_tax_class'] ?? '';
                 ?>
-                <div class="_abp_panel_xs">
-                    <div class="_panel_head_xs" data-collapse-target="#abptf_tax"><h5 class="_abp"><span class="_mar_r_xxs">🧾</span> <?php esc_html_e('Tax Configuration', 'abp-transportforge'); ?></h5></div>
-                    <div class="_panel_body_xs abp_active" data-collapse="#abptf_tax">
-                        <?php if (get_option('woocommerce_calc_taxes') == 'yes') { ?>
-                            <div class="group_setting">
-                                <div class="setting_item">
-                                    <label class="_f_equal_f_wrap">
-                                        <span class="_abp_label"><?php esc_html_e('Tax Status', 'abp-transportforge'); ?></span>
-                                        <select class="_form_control" name="_tax_status">
-                                            <option disabled selected><?php esc_html_e('Please Select', 'abp-transportforge'); ?></option>
-                                            <option value="taxable" <?php echo esc_attr($tax_status == 'taxable' ? 'selected' : ''); ?>><?php esc_html_e('Taxable', 'abp-transportforge'); ?></option>
-                                            <option value="shipping" <?php echo esc_attr($tax_status == 'shipping' ? 'selected' : ''); ?>><?php esc_html_e('Shipping only', 'abp-transportforge'); ?></option>
-                                            <option value="none" <?php echo esc_attr($tax_status == 'none' ? 'selected' : ''); ?>><?php esc_html_e('None', 'abp-transportforge'); ?></option>
-                                        </select>
-                                    </label>
-                                </div>
-                                <div class="setting_item">
-                                    <label class="_f_equal_f_wrap">
-                                        <span class="_abp_label"><?php esc_html_e('Tax Class', 'abp-transportforge'); ?></span>
-                                        <select class="_form_control" name="_tax_class">
-                                            <option disabled selected><?php esc_html_e('Please Select', 'abp-transportforge'); ?></option>
-                                            <option value="standard" <?php echo esc_attr($tax_class == 'standard' ? 'selected' : ''); ?>><?php esc_html_e('Standard', 'abp-transportforge'); ?></option>
-                                            <?php if (sizeof($tax_classes) > 0) { ?>
-                                                <?php foreach ($tax_classes as $class) { ?>
-                                                    <option value="<?php echo esc_attr($class->slug); ?>" <?php echo esc_attr($tax_class == $class->slug ? 'selected' : ''); ?>> <?php echo esc_html($class->name); ?> </option>
-                                                <?php } ?>
-                                            <?php } ?>
-                                        </select>
-                                    </label>
-                                    <div class="_divider_xs"></div>
-                                    <?php ABPTF_Layout::info_text('_tax_class'); ?>
-                                </div>
-                            </div>
-                        <?php } else {
-                            ABPTF_Layout::layout_warning_info('enable_tax_msg');
-                        } ?>
+                <h5 class="_abp"><span class="_mar_r_xxs">🧾</span> <?php esc_html_e('Tax Configuration', 'abp-transportforge'); ?></h5>
+                <div class="_divider_xs"></div>
+                <?php if (get_option('woocommerce_calc_taxes') == 'yes') { ?>
+                    <div class="group_setting">
+                        <div class="setting_item">
+                            <label class="_f_equal_f_wrap">
+                                <span class="_abp_label"><?php esc_html_e('Tax Status', 'abp-transportforge'); ?></span>
+                                <select class="_form_control" name="_tax_status">
+                                    <option disabled selected><?php esc_html_e('Please Select', 'abp-transportforge'); ?></option>
+                                    <option value="taxable" <?php echo esc_attr($tax_status == 'taxable' ? 'selected' : ''); ?>><?php esc_html_e('Taxable', 'abp-transportforge'); ?></option>
+                                    <option value="shipping" <?php echo esc_attr($tax_status == 'shipping' ? 'selected' : ''); ?>><?php esc_html_e('Shipping only', 'abp-transportforge'); ?></option>
+                                    <option value="none" <?php echo esc_attr($tax_status == 'none' ? 'selected' : ''); ?>><?php esc_html_e('None', 'abp-transportforge'); ?></option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="setting_item">
+                            <label class="_f_equal_f_wrap">
+                                <span class="_abp_label"><?php esc_html_e('Tax Class', 'abp-transportforge'); ?></span>
+                                <select class="_form_control" name="_tax_class">
+                                    <option disabled selected><?php esc_html_e('Please Select', 'abp-transportforge'); ?></option>
+                                    <option value="standard" <?php echo esc_attr($tax_class == 'standard' ? 'selected' : ''); ?>><?php esc_html_e('Standard', 'abp-transportforge'); ?></option>
+                                    <?php if (sizeof($tax_classes) > 0) { ?>
+                                        <?php foreach ($tax_classes as $class) { ?>
+                                            <option value="<?php echo esc_attr($class->slug); ?>" <?php echo esc_attr($tax_class == $class->slug ? 'selected' : ''); ?>> <?php echo esc_html($class->name); ?> </option>
+                                        <?php } ?>
+                                    <?php } ?>
+                                </select>
+                            </label>
+                            <div class="_divider_xs"></div>
+                            <?php ABPTF_Layout::info_text('_tax_class'); ?>
+                        </div>
                     </div>
-                </div>
+                <?php } else {
+                    ABPTF_Layout::layout_warning_info('enable_tax_msg');
+                } ?>
                 <?php
             }
             public function post_faq($post_infos = []): void {
@@ -191,40 +188,37 @@
                     $faqs = get_post_meta($post_id, 'abptf_faqs', true);
                     $faqs = is_array($faqs) ? $faqs : [];
                     ?>
-                    <div class="_abp_panel_xs faq_configuration _mar_t_xs">
-                        <div class="_panel_head_xs" data-collapse-target="#abptf_faq"><h5 class="_abp"><span class="_mar_r_xxs">❓</span><?php esc_html_e('FAQs Configuration', 'abp-transportforge'); ?></h5></div>
-                        <div class="_panel_body_xs abp_active" data-collapse="#abptf_faq">
-                            <div class="group_setting">
-                                <div class="setting_item">
-                                    <div class="_f_wrap_fj_between_fa_center">
-                                        <div class="_fa_center">
-                                            <?php ABPTF_Layout::switch_checkbox('display_faq', $display); ?>
-                                            <span class="_abp_label"><?php esc_html_e('Active FAQs ?', 'abp-transportforge'); ?></span>
-                                        </div>
-                                    </div>
-                                    <div class="_divider_xs"></div>
-                                    <?php ABPTF_Layout::info_text('display_faq'); ?>
-                                </div>
-                                <div data-collapse="#display_faq" class="setting_item <?php echo esc_attr($display == 'on' ? 'abp_active' : ''); ?>">
-                                    <div class="_fj_between">
-                                        <div class="_fa_center">
-                                            <?php ABPTF_Layout::switch_checkbox('active_global_faq', $active_global_faq); ?>
-                                            <span class="_abp_label"><?php esc_html_e('Use Global FAQ ?', 'abp-transportforge'); ?></span>
-                                        </div>
-                                        <div data-collapse="#active_global_faq" class=" <?php echo esc_attr($active_global_faq == 'on' ? '' : 'abp_active'); ?>">
-                                            <button type="button" class="_btn_theme import_faq"><span class="fas fa-file-upload _mar_r_xs"></span><?php esc_html_e('Import Global FAQ', 'abp-transportforge'); ?></button>
-                                        </div>
-                                    </div>
-                                    <div class="_divider_xs"></div>
-                                    <?php ABPTF_Layout::info_text('active_global_faq'); ?>
+                    <h5 class="_abp"><span class="_mar_r_xxs">❓</span><?php esc_html_e('FAQs Configuration', 'abp-transportforge'); ?></h5>
+                    <div class="_divider_xs"></div>
+                    <div class="group_setting">
+                        <div class="setting_item">
+                            <div class="_f_wrap_fj_between_fa_center">
+                                <div class="_fa_center">
+                                    <?php ABPTF_Layout::switch_checkbox('display_faq', $display); ?>
+                                    <span class="_abp_label"><?php esc_html_e('Active FAQs ?', 'abp-transportforge'); ?></span>
                                 </div>
                             </div>
-                            <div data-collapse="#display_faq" class="<?php echo esc_attr($display == 'on' ? 'abp_active' : ''); ?>">
-                                <div class="_mar_t_xs <?php echo esc_attr($active_global_faq == 'on' ? '' : 'abp_active'); ?>" data-collapse="#active_global_faq">
-                                    <div class="faq_content">
-                                        <?php $this->faq($faqs); ?>
-                                    </div>
+                            <div class="_divider_xs"></div>
+                            <?php ABPTF_Layout::info_text('display_faq'); ?>
+                        </div>
+                        <div data-collapse="#display_faq" class="setting_item <?php echo esc_attr($display == 'on' ? 'abp_active' : ''); ?>">
+                            <div class="_fj_between">
+                                <div class="_fa_center">
+                                    <?php ABPTF_Layout::switch_checkbox('active_global_faq', $active_global_faq); ?>
+                                    <span class="_abp_label"><?php esc_html_e('Use Global FAQ ?', 'abp-transportforge'); ?></span>
                                 </div>
+                                <div data-collapse="#active_global_faq" class=" <?php echo esc_attr($active_global_faq == 'on' ? '' : 'abp_active'); ?>">
+                                    <button type="button" class="_btn_theme import_faq"><span class="fas fa-file-upload _mar_r_xs"></span><?php esc_html_e('Import Global FAQ', 'abp-transportforge'); ?></button>
+                                </div>
+                            </div>
+                            <div class="_divider_xs"></div>
+                            <?php ABPTF_Layout::info_text('active_global_faq'); ?>
+                        </div>
+                    </div>
+                    <div data-collapse="#display_faq" class="<?php echo esc_attr($display == 'on' ? 'abp_active' : ''); ?>">
+                        <div class="_mar_t_xs <?php echo esc_attr($active_global_faq == 'on' ? '' : 'abp_active'); ?>" data-collapse="#active_global_faq">
+                            <div class="faq_content">
+                                <?php $this->faq($faqs); ?>
                             </div>
                         </div>
                     </div>
@@ -237,39 +231,36 @@
                     $display = $post_infos['display_tc'] ?? 'on';
                     $active_global_tc = $post_infos['active_global_tc'] ?? 'on';
                     ?>
-                    <div class="_abp_panel_xs tc_configuration _mar_t_xs">
-                        <div class="_panel_head_xs" data-collapse-target="#abptf_tc"><h5 class="_abp"><span class="_mar_r_xxs">🤝</span><?php esc_html_e('Term & Conditions', 'abp-transportforge'); ?></h5></div>
-                        <div class="_panel_body_xs abp_active" data-collapse="#abptf_tc">
-                            <div class="group_setting">
-                                <div class="setting_item">
-                                    <div class="_f_wrap_fj_between_fa_center">
-                                        <div class="_fa_center">
-                                            <?php ABPTF_Layout::switch_checkbox('display_tc', $display); ?>
-                                            <span class="_abp_label"><?php esc_html_e('Active Term & Conditions ?', 'abp-transportforge'); ?></span>
-                                        </div>
-                                    </div>
-                                    <div class="_divider_xs"></div>
-                                    <?php ABPTF_Layout::info_text('display_tc'); ?>
+                    <h5 class="_abp"><span class="_mar_r_xxs">🤝</span><?php esc_html_e('Term & Conditions', 'abp-transportforge'); ?></h5>
+                    <div class="_divider_xs"></div>
+                    <div class="group_setting">
+                        <div class="setting_item">
+                            <div class="_f_wrap_fj_between_fa_center">
+                                <div class="_fa_center">
+                                    <?php ABPTF_Layout::switch_checkbox('display_tc', $display); ?>
+                                    <span class="_abp_label"><?php esc_html_e('Active Term & Conditions ?', 'abp-transportforge'); ?></span>
                                 </div>
-                                <div data-collapse="#display_tc" class="setting_item <?php echo esc_attr($display == 'on' ? 'abp_active' : ''); ?>">
-                                    <div class="_fj_between">
-                                        <div class="_fa_center">
-                                            <?php ABPTF_Layout::switch_checkbox('active_global_tc', $active_global_tc); ?>
-                                            <span class="_abp_label"><?php esc_html_e('Use Global Term & Conditions ?', 'abp-transportforge'); ?></span>
-                                        </div>
-                                        <div data-collapse="#active_global_tc" class=" <?php echo esc_attr($active_global_tc == 'on' ? '' : 'abp_active'); ?>">
-                                            <button type="button" class="_btn_theme import_tc"><span class="fas fa-file-upload _mar_r_xs"></span><?php esc_html_e('Import Global Term & Conditions', 'abp-transportforge'); ?></button>
-                                        </div>
-                                    </div>
-                                    <div class="_divider_xs"></div>
-                                    <?php ABPTF_Layout::info_text('active_global_tc'); ?>
+                            </div>
+                            <div class="_divider_xs"></div>
+                            <?php ABPTF_Layout::info_text('display_tc'); ?>
+                        </div>
+                        <div data-collapse="#display_tc" class="setting_item <?php echo esc_attr($display == 'on' ? 'abp_active' : ''); ?>">
+                            <div class="_fj_between">
+                                <div class="_fa_center">
+                                    <?php ABPTF_Layout::switch_checkbox('active_global_tc', $active_global_tc); ?>
+                                    <span class="_abp_label"><?php esc_html_e('Use Global Term & Conditions ?', 'abp-transportforge'); ?></span>
                                 </div>
-                                <div data-collapse="#display_tc" class="<?php echo esc_attr($display == 'on' ? 'abp_active' : ''); ?>">
-                                    <div class="setting_item full_width <?php echo esc_attr($active_global_tc == 'on' ? '' : 'abp_active'); ?>" data-collapse="#active_global_tc">
-                                        <div class="tc_content">
-                                            <?php $this->tc($abptf_tc); ?>
-                                        </div>
-                                    </div>
+                                <div data-collapse="#active_global_tc" class=" <?php echo esc_attr($active_global_tc == 'on' ? '' : 'abp_active'); ?>">
+                                    <button type="button" class="_btn_theme import_tc"><span class="fas fa-file-upload _mar_r_xs"></span><?php esc_html_e('Import Global Term & Conditions', 'abp-transportforge'); ?></button>
+                                </div>
+                            </div>
+                            <div class="_divider_xs"></div>
+                            <?php ABPTF_Layout::info_text('active_global_tc'); ?>
+                        </div>
+                        <div data-collapse="#display_tc" class="<?php echo esc_attr($display == 'on' ? 'abp_active' : ''); ?>">
+                            <div class="setting_item full_width <?php echo esc_attr($active_global_tc == 'on' ? '' : 'abp_active'); ?>" data-collapse="#active_global_tc">
+                                <div class="tc_content">
+                                    <?php $this->tc($abptf_tc); ?>
                                 </div>
                             </div>
                         </div>
@@ -283,7 +274,7 @@
                 <div class="abp_form">
                     <?php $this->tc($tcs); ?>
                     <div class="_divider_xs"></div>
-                    <?php ABPTF_Layout::button_global_save('tc_config',__('Save Term & Conditions Configuration', 'abp-transportforge')); ?>
+                    <?php ABPTF_Layout::button_global_save('tc_config', __('Save Term & Conditions Configuration', 'abp-transportforge')); ?>
                 </div>
                 <?php
             }

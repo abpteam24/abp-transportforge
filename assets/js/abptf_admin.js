@@ -44,6 +44,28 @@ function abptf_location_selection(target = abptf_parent) {
         });
     }
 }
+function abptf_ticket_type_selection(target = abptf_parent) {
+    const $selects = target.find('.ticket_configuration [name="ticket_name[]"]');
+    if ($selects.length > 0) {
+        const selectedValues = $selects.map(function () {
+            return jQuery(this).val();
+        }).get().filter(value => value !== "");
+        $selects.each(function () {
+            const $currentSelect = jQuery(this);
+            const currentValue = $currentSelect.val();
+            $currentSelect.html('<option value="" selected>' + abptf_admin_data.msg.select_ticket + '</option>');
+            abptf_ticket_type.forEach(function (ticket) {
+                if (!selectedValues.includes(ticket.id.toString()) || ticket.id.toString() === currentValue) {
+                    const $option = jQuery('<option></option>').val(ticket.id).text(ticket.label);
+                    if (ticket.id.toString() === currentValue) {
+                        $option.prop('selected', true);
+                    }
+                    $currentSelect.append($option);
+                }
+            });
+        });
+    }
+}
 function abptf_load_post_list(parent, filter_args) {
     let target = parent.find('.post_list');
     if (target.length > 0) {
@@ -95,7 +117,7 @@ function abptf_get_form_data(form_area) {
         if (action) {
             $('body').addClass('_stop_scroll').find('[data-popup="#abptf_global_popup"]').addClass('in').promise().done(function () {
                 let parent = abptf_parent.find('[data-popup="#abptf_global_popup"]').find('.popup_area').addClass(action);
-                id = id !== '' ? parseInt(id) : '';
+                id = id !== '' ? id : '';
                 let target = parent.find('.popup_body');
                 let post_id = abptf_parent.find("[name='abptf_post_id']").val() || '';
                 $.ajax({
@@ -166,6 +188,7 @@ function abptf_get_form_data(form_area) {
                                 if (action === 'ticket_type') {
                                     abptf_ticket_type = response.data.js;
                                     abptf_sp_init();
+                                    abptf_ticket_type_selection();
                                 }
                                 if (action === 'decor_item') {
                                     abptf_decor_item = response.data.js;
@@ -196,7 +219,7 @@ function abptf_get_form_data(form_area) {
     };
     window.abptf_delete_global = function (action, id = '') {
         if (confirm(abptf_admin_data.msg.confirm_delete + ' \n\n' + abptf_admin_data.msg.confirm_ok + ' \n ' + abptf_admin_data.msg.confirm_cancel)) {
-            id = id !== '' ? parseInt(id) : '';
+            id = id !== '' ? id : '';
             if (action && !isNaN(id) && id !== '') {
                 let target = abptf_parent.find('.' + action);
                 jQuery.ajax({
@@ -234,6 +257,32 @@ function abptf_get_form_data(form_area) {
         }
     };
     //==========Post List=================//
+    window.abptf_post_action= function (action, id) {
+        id = id !== '' ? parseInt(id) : '';
+        if (action && !isNaN(id) && id !== '') {
+
+                let parent = abptf_parent.find('.abptf_posts')
+                $.ajax({
+                    type: 'POST', url: abptf_admin_data.ajax_url, data: {
+                        "action": 'abptf_post_' + action, 'id': id, 'nonce': abptf_admin_data.nonce
+                    }, beforeSend: function () {
+                        abptf_spinner(parent);
+                        abptf_toast_msg(abptf_admin_data.msg[action] ? abptf_admin_data.msg[action] : abptf_admin_data.msg.loading);
+                    }, success: function (response) {
+                        abptf_spinner_remove(parent);
+                        abptf_toast_msg(response.data.msg, response.data.type);
+                        window.location.reload();
+
+                    }, error: function (xhr) {
+                        abptf_spinner_remove(parent);
+                        if (xhr.response && xhr.response.data) {
+                            abptf_toast_msg(xhr.response.data.msg, xhr.response.data.type);
+                        }
+                    }
+                })
+
+        }
+    };
     $(document).on("click", "div.abptf_admin button.post_permanent_remove", function () {
         let post_id = $(this).attr('data-post_id');
         let parent = $(this).closest('.abptf_posts');
@@ -297,12 +346,18 @@ function abptf_get_form_data(form_area) {
             abptf_load_post_list(parent, filter_args);
         }
     });
-    //==========Route config=================//
+    //==========Route , ticket config=================//
     abptf_parent.on('abp_trigger', '.abptf_routing .add_new_hook', function () {
         abptf_location_selection();
     });
     abptf_parent.on('change', '.abptf_routing [name="stop_name[]"] , .abptf_routing [name="return_stop_name[]"]', function () {
         abptf_location_selection();
+    });
+    abptf_parent.on('abp_trigger', '.ticket_configuration .add_new_hook', function () {
+        abptf_ticket_type_selection();
+    });
+    abptf_parent.on('change', '.ticket_configuration [name="ticket_name[]"] ', function () {
+        abptf_ticket_type_selection();
     });
     //==========Orders list=================//
     $(document).on('submit', 'div.abptf_admin form.load_order_list', function (e) {

@@ -72,7 +72,7 @@
                     </div>
                     <?php $this->common_part($abptf_dates); ?>
                     <div class="_divider_xs"></div>
-                    <?php ABPTF_Layout::button_global_save('global_dates',__('Save Date Configuration', 'abp-transportforge')); ?>
+                    <?php ABPTF_Layout::button_global_save('global_dates', __('Save Date Configuration', 'abp-transportforge')); ?>
                 </div>
                 <?php
             }
@@ -83,11 +83,115 @@
                 $operation_times = $time_infos['operation_time'] ?? [];
                 $day_times = $time_infos['day_time'] ?? [];
                 $date_times = $time_infos['date_times '] ?? [];
+                $opt_time = !empty($day_times) ? 'day_wise_time' : '';
+                $opt_time = !empty($date_times) ? $opt_time . ',date_wise_time' : $opt_time;
+                $display_return = $post_infos['display_return'] ?? 'off';
+                $return_time_infos = $return_post_infos['return_time_infos'] ?? [];
+                $return_day_times = $return_time_infos['return_day_time'] ?? [];
+                $return_date_times = $return_time_infos['return_date_times '] ?? [];
+                $return_opt_time = !empty($return_day_times) ? 'return_day_wise_time' : '';
+                $return_opt_time = !empty($return_date_times) ? $return_opt_time . ',return_date_wise_time' : $return_opt_time;
                 ?>
                 <div class="tab_item date_configuration" data-tabs="#abptf_dates">
                     <h4 class="_abp_color_theme"><span class=" _mar_r_xxs">🗓️</span> <?php esc_html_e('Date & Time Configuration', 'abp-transportforge'); ?></h4>
                     <div class="_divider_xs"></div>
                     <div class="group_setting">
+                        <div class="setting_item full_width">
+                            <div class=" configuration_content">
+                                <div class="_f_wrap_fj_between_fa_center">
+                                    <span class="_abp_label"><?php esc_html_e('Operation Time', 'abp-transportforge'); ?><sup class="_color_required">*</sup></span>
+                                    <div class="_group_content custom_checkbox">
+                                        <input type="hidden" name="operation_time_optional" value="<?php echo esc_attr($opt_time); ?>"/>
+                                        <div class="checkbox_item">
+                                            <button type="button" class="_btn_light_info_xs <?php echo esc_attr(!empty($day_times) ? 'abp_active' : ''); ?>" data-collapse-target="#day_wise_time" data-checked="day_wise_time" data-open-icon="fa-check-square" data-close-icon="fa-square">
+                                                <span data-icon class="_mar_r_xs far <?php echo esc_attr(!empty($day_times) ? 'fa-check-square' : 'fa-square'); ?>"></span><?php esc_html_e('Day Wise Time', 'abp-transportforge'); ?>
+                                            </button>
+                                        </div>
+                                        <div class="checkbox_item">
+                                            <button type="button" class="_btn_light_info_xs <?php echo esc_attr(!empty($date_times) ? 'abp_active' : ''); ?>" data-collapse-target="#date_wise_time" data-checked="date_wise_time" data-open-icon="fa-check-square" data-close-icon="fa-square">
+                                                <span data-icon class="_mar_r_xs far <?php echo esc_attr(!empty($date_times) ? 'fa-check-square' : 'fa-square'); ?>"></span><?php esc_html_e('Date Wise Time', 'abp-transportforge'); ?>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <?php ABPTF_Layout::button_add(__('Add Operation Time', 'abp-transportforge')); ?>
+                                </div>
+                                <?php ABPTF_Layout::info_text('operation_time'); ?>
+                                <div class="_divider_xs"></div>
+                                <div class="_f_wrap_f_equal_f_gap_xxs">
+                                    <div class="insertable_area sortable_area _f_wrap_gap_xs">
+                                        <?php
+                                            $time_exit = 0;
+                                            if (!empty($operation_times)) {
+                                                foreach ($operation_times as $times) {
+                                                    if (!empty($times)) {
+                                                        $this->time_item('operation_time[]', $times, 'required');
+                                                        $time_exit++;
+                                                    }
+                                                }
+                                            }
+                                            if ($time_exit == 0) {
+                                                $this->time_item('operation_time[]', '', 'required');
+                                            }
+                                        ?>
+                                    </div>
+                                    <div class="abp_hidden">
+                                        <div class="hidden_content">
+                                            <?php $this->time_item('operation_time[]'); ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php $this->day_wise_time($day_times); ?>
+                            <?php $this->date_wise_time($date_times); ?>
+                        </div>
+                        <div class="setting_item full_width <?php echo esc_attr($display_return == 'on' ? 'abp_active' : ''); ?>" data-collapse="#display_return">
+                            <div class=" configuration_content">
+                                <div class="_f_wrap_fj_between_fa_center">
+                                    <span class="_abp_label"><?php esc_html_e('Return Operation Time', 'abp-transportforge'); ?><sup class="_color_required">*</sup></span>
+                                    <div class="_group_content custom_checkbox">
+                                        <input type="hidden" name="return_operation_time_optional" value="<?php echo esc_attr($return_opt_time); ?>"/>
+                                        <div class="checkbox_item">
+                                            <button type="button" class="_btn_light_info_xs <?php echo esc_attr(!empty($return_day_times) ? 'abp_active' : ''); ?>" data-collapse-target="#return_day_wise_time" data-checked="return_day_wise_time" data-open-icon="fa-check-square" data-close-icon="fa-square">
+                                                <span data-icon class="_mar_r_xs far <?php echo esc_attr(!empty($return_day_times) ? 'fa-check-square' : 'fa-square'); ?>"></span><?php esc_html_e('Return Day Wise Time', 'abp-transportforge'); ?>
+                                            </button>
+                                        </div>
+                                        <div class="checkbox_item">
+                                            <button type="button" class="_btn_light_info_xs <?php echo esc_attr(!empty($return_date_times) ? 'abp_active' : ''); ?>" data-collapse-target="#return_date_wise_time" data-checked="return_date_wise_time" data-open-icon="fa-check-square" data-close-icon="fa-square">
+                                                <span data-icon class="_mar_r_xs far <?php echo esc_attr(!empty($date_times) ? 'fa-check-square' : 'fa-square'); ?>"></span><?php esc_html_e('Return Date Wise Time', 'abp-transportforge'); ?>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <?php ABPTF_Layout::button_add(__('Add Return Operation Time', 'abp-transportforge')); ?>
+                                </div>
+                                <?php ABPTF_Layout::info_text('return_operation_time'); ?>
+                                <div class="_divider_xs"></div>
+                                <div class="_f_wrap_f_equal_f_gap_xxs">
+                                    <div class="insertable_area sortable_area _f_wrap_gap_xs">
+                                        <?php
+                                            $time_exit = 0;
+                                            if (!empty($return_operation_times)) {
+                                                foreach ($return_operation_times as $times) {
+                                                    if (!empty($times)) {
+                                                        $this->time_item('return_operation_time[]', $times, 'required');
+                                                        $time_exit++;
+                                                    }
+                                                }
+                                            }
+                                            if ($time_exit == 0) {
+                                                $this->time_item('return_operation_time[]', '', 'required');
+                                            }
+                                        ?>
+                                    </div>
+                                    <div class="abp_hidden">
+                                        <div class="hidden_content">
+                                            <?php $this->time_item('return_operation_time[]'); ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php $this->day_wise_time($return_day_times, 'return_'); ?>
+                            <?php $this->date_wise_time($return_date_times, 'return_'); ?>
+                        </div>
                         <div class="setting_item">
                             <div class="_f_wrap_fj_between_fa_center">
                                 <div class="_fa_center">
@@ -101,56 +205,10 @@
                             <div class="_divider_xs"></div>
                             <?php ABPTF_Layout::info_text('active_global_dates'); ?>
                         </div>
-                        <div class="setting_item configuration_content">
-                            <div class="_f_wrap_fj_between_fa_center">
-                                <span class="_abp_label"><?php esc_html_e('Operation Time', 'abp-transportforge'); ?><sup class="_color_required">*</sup></span>
-                                <div class="_group_content custom_checkbox">
-                                    <div class="checkbox_item">
-                                        <button type="button" class="_btn_light_info_xs <?php echo esc_attr(!empty($day_times) ? 'abp_active' : ''); ?>" data-collapse-target="#day_wise_time" data-checked="day_wise_time" data-open-icon="fa-check-square" data-close-icon="fa-square">
-                                            <span data-icon class="_mar_r_xs far <?php echo esc_attr(!empty($day_times) ? 'fa-check-square' : 'fa-square'); ?>"></span><?php esc_html_e('Day Wise Time', 'abp-transportforge'); ?>
-                                        </button>
-                                    </div>
-                                    <div class="checkbox_item">
-                                        <button type="button" class="_btn_light_info_xs <?php echo esc_attr(!empty($date_times) ? 'abp_active' : ''); ?>" data-collapse-target="#date_wise_time" data-checked="date_wise_time" data-open-icon="fa-check-square" data-close-icon="fa-square">
-                                            <span data-icon class="_mar_r_xs far <?php echo esc_attr(!empty($date_times) ? 'fa-check-square' : 'fa-square'); ?>"></span><?php esc_html_e('Date Wise Time', 'abp-transportforge'); ?>
-                                        </button>
-                                    </div>
-                                </div>
-                                <?php ABPTF_Layout::button_add_xs(__('Add Operation Time', 'abp-transportforge')); ?>
-                            </div>
-                            <div class="_divider_xs"></div>
-                            <div class="_f_wrap_f_equal_f_gap_xxs">
-                                <div class="insertable_area sortable_area _f_wrap_gap_xs">
-                                    <?php
-                                        $time_exit = 0;
-                                        if (!empty($operation_times)) {
-                                            foreach ($operation_times as $times) {
-                                                if (!empty($times)) {
-                                                    $this->time_item('operation_time[]', $times, 'required');
-                                                    $time_exit++;
-                                                }
-                                            }
-                                        }
-                                        if ($time_exit == 0) {
-                                            $this->time_item('operation_time[]', '', 'required');
-                                        }
-                                    ?>
-                                </div>
-                                <div class="abp_hidden">
-                                    <div class="hidden_content">
-                                        <?php $this->time_item('operation_time[]'); ?>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="_divider_xs"></div>
-                            <?php ABPTF_Layout::info_text('operation_time'); ?>
-                        </div>
                     </div>
                     <div class="date_content <?php echo esc_attr($active_global_dates == 'off' ? 'abp_active' : ''); ?>" data-collapse="#active_global_dates">
                         <?php $this->common_part($date_infos); ?>
                     </div>
-                    <?php $this->day_wise_time($day_times); ?>
-                    <?php $this->date_wise_time($date_times); ?>
                 </div>
                 <?php
             }
@@ -294,7 +352,7 @@
                     <div class="setting_item full_width configuration_content <?php echo esc_attr($date_type == 'specific_date' ? 'abp_active' : ''); ?>" data-close="#specific_date">
                         <div class="_f_wrap_fj_between_fa_center">
                             <span class="_abp_label"><?php esc_html_e('Specific Dates', 'abp-transportforge'); ?></span>
-                            <?php ABPTF_Layout::button_add_xs(__('Add Specific Date', 'abp-transportforge')); ?>
+                            <?php ABPTF_Layout::button_add(__('Add Specific Date', 'abp-transportforge')); ?>
                         </div>
                         <div class="_divider_xs"></div>
                         <div class="insertable_area sortable_area _f_wrap_gap_xs">
@@ -368,7 +426,7 @@
                         <div class="setting_item configuration_content <?php echo esc_attr(in_array('specific_off_dates', $date_rule_array, true) ? 'abp_active' : ''); ?>" data-collapse="#specific_off_dates">
                             <div class="_fj_between_fa_center">
                                 <span class="_abp_label"><?php esc_html_e('Specific Off Dates(optional)', 'abp-transportforge'); ?></span>
-                                <?php ABPTF_Layout::button_add_xs(__('Add Specific Off Date', 'abp-transportforge')); ?>
+                                <?php ABPTF_Layout::button_add(__('Add Specific Off Date', 'abp-transportforge')); ?>
                             </div>
                             <?php ABPTF_Layout::info_text('specific_off_dates'); ?>
                             <div class="_divider_xs"></div>
@@ -392,7 +450,7 @@
                         <div class="setting_item configuration_content  <?php echo esc_attr(in_array('special_on_dates', $date_rule_array, true) ? 'abp_active' : ''); ?>" data-collapse="#special_on_dates">
                             <div class="_fj_between_fa_center">
                                 <span class="_abp_label"><?php esc_html_e('Special On Dates (optional)', 'abp-transportforge'); ?></span>
-                                <?php ABPTF_Layout::button_add_xs(__('Add Special On Dates', 'abp-transportforge')); ?>
+                                <?php ABPTF_Layout::button_add(__('Add Special On Dates', 'abp-transportforge')); ?>
                             </div>
                             <?php ABPTF_Layout::info_text('special_on_dates'); ?>
                             <div class="_divider_xs"></div>
@@ -416,7 +474,7 @@
                         <div class="setting_item configuration_content <?php echo esc_attr(in_array('off_date_range', $date_rule_array, true) ? 'abp_active' : ''); ?>" data-collapse="#off_date_range">
                             <div class="_fj_between_fa_center">
                                 <span class="_abp_label"><?php esc_html_e('Off Date Range(optional)', 'abp-transportforge'); ?></span>
-                                <?php ABPTF_Layout::button_add_xs(__('Add Off Date Range', 'abp-transportforge')); ?>
+                                <?php ABPTF_Layout::button_add(__('Add Off Date Range', 'abp-transportforge')); ?>
                             </div>
                             <?php ABPTF_Layout::info_text('off_date_range'); ?>
                             <div class="_divider_xs"></div>
@@ -441,16 +499,17 @@
                 </div>
                 <?php
             }
-            public function day_wise_time($day_times = []): void {
+            public function day_wise_time($day_times = [], $prefix = ''): void {
                 $days = ABPTF_Layout::week_day();
                 ?>
-                <div class="setting_item full_width _mar_t_xs  <?php echo esc_attr(!empty($day_times) ? 'abp_active' : ''); ?>" data-collapse="#day_wise_time">
+                <div class="full_width  <?php echo esc_attr(!empty($day_times) ? 'abp_active' : ''); ?>" data-collapse="#<?php echo esc_attr($prefix); ?>day_wise_time">
+                    <div class="_divider_xxs"></div>
                     <div class="_fj_between _fa_center">
                         <span class="_abp_label"><?php esc_html_e('Day Wise Operation Time (Optional) ', 'abp-transportforge'); ?></span>
                         <div class="_group_content custom_checkbox">
                             <?php foreach ($days as $key => $day) { ?>
                                 <div class="checkbox_item">
-                                    <button type="button" class="_btn_light_info_xs <?php echo esc_attr(in_array((string)$key, $day_times, true) ? 'abp_active' : ''); ?>" data-collapse-target="#<?php echo esc_attr($key); ?>" data-checked="<?php echo esc_attr($key); ?>" data-open-icon="fa-check-square" data-close-icon="fa-square">
+                                    <button type="button" class="_btn_light_info_xs <?php echo esc_attr(in_array((string)$key, $day_times, true) ? 'abp_active' : ''); ?>" data-collapse-target="#<?php echo esc_attr($prefix . $key); ?>" data-checked="<?php echo esc_attr($key); ?>" data-open-icon="fa-check-square" data-close-icon="fa-square">
                                         <span data-icon class="_mar_r_xs far <?php echo esc_attr(in_array((string)$key, $day_times, true) ? 'far fa-check-square' : 'fa-square'); ?>"></span><?php echo esc_html($day); ?>
                                     </button>
                                 </div>
@@ -461,15 +520,15 @@
                     <?php foreach ($days as $key => $day) {
                         $operation_times = $day_times[$key] ?? [];
                         ?>
-                        <div class="configuration_content <?php echo esc_attr(in_array((string)$key, $day_times, true) ? 'abp_active' : ''); ?>" data-collapse="#<?php echo esc_attr($key); ?>">
+                        <div class="configuration_content <?php echo esc_attr(in_array((string)$key, $day_times, true) ? 'abp_active' : ''); ?>" data-collapse="#<?php echo esc_attr($prefix . $key); ?>">
                             <div class="_divider_xs"></div>
                             <div class="insertable_area sortable_area _f_wrap_gap_xs">
-                                <?php ABPTF_Layout::button_add_xs(__('Operation Time : ', 'abp-transportforge') . $day, 'add_new_hook _min_200'); ?>
+                                <?php ABPTF_Layout::button_add(__('Operation Time : ', 'abp-transportforge') . $day, 'add_new_hook _min_200'); ?>
                                 <?php
                                     if (!empty($operation_times)) {
                                         foreach ($operation_times as $times) {
                                             if (!empty($times)) {
-                                                $this->time_item($key . '_time[]', $times);
+                                                $this->time_item($prefix . $key . '_time[]', $times);
                                             }
                                         }
                                     }
@@ -477,7 +536,7 @@
                             </div>
                             <div class="abp_hidden">
                                 <div class="hidden_content">
-                                    <?php $this->time_item('operation_time[]'); ?>
+                                    <?php $this->time_item($prefix . 'operation_time[]'); ?>
                                 </div>
                             </div>
                         </div>
@@ -485,24 +544,25 @@
                 </div>
                 <?php
             }
-            public function date_wise_time($date_times = []): void {
+            public function date_wise_time($date_times = [], $prefix = ''): void {
                 ?>
-                <div class="setting_item full_width _mar_t_xs configuration_content   <?php echo esc_attr(!empty($day_times) ? 'abp_active' : ''); ?>" data-collapse="#date_wise_time">
+                <div class="full_width configuration_content   <?php echo esc_attr(!empty($day_times) ? 'abp_active' : ''); ?>" data-collapse="#<?php echo esc_attr($prefix); ?>date_wise_time">
+                    <div class="_divider_xxs"></div>
                     <div class="_f_wrap_fj_between_fa_center">
                         <span class="_abp_label"><?php esc_html_e('Date Wise Operation Time (Optional) ', 'abp-transportforge'); ?></span>
-                        <?php ABPTF_Layout::button_add_xs(__('Add New Date Wise Operation Time', 'abp-transportforge')); ?>
+                        <?php ABPTF_Layout::button_add(__('Add New Date Wise Operation Time', 'abp-transportforge')); ?>
                     </div>
                     <?php ABPTF_Layout::info_text('date_wise_time'); ?>
                     <div class="insertable_area sortable_area">
                         <?php if (!empty($date_times)) {
                             foreach ($date_times as $key => $date_time) {
-                                $this->date_wise_time_item($date_time, $key);
+                                $this->date_wise_time_item($date_time, $key, $prefix);
                             }
                         } ?>
                     </div>
                     <div class="abp_hidden" data-hidden_id>
                         <div class="hidden_content">
-                            <?php $this->date_wise_time_item(); ?>
+                            <?php $this->date_wise_time_item([], '', $prefix); ?>
                         </div>
                     </div>
                 </div>
@@ -543,26 +603,26 @@
                 </div>
                 <?php
             }
-            public function date_wise_time_item($date_time = [], $key = ''): void {
+            public function date_wise_time_item($date_time = [], $key = '', $prefix = ''): void {
                 $times = $date_time['time'] ?? [];
                 ?>
                 <div class="configuration_content delete_area">
-                    <input type="hidden" name="date_wise_time_id[]" class="hidden_id" value="<?php echo esc_attr($key); ?>">
+                    <input type="hidden" name="<?php echo esc_attr($prefix); ?>date_wise_time_id[]" class="hidden_id" value="<?php echo esc_attr($key); ?>">
                     <div class="_divider_xs"></div>
                     <div class="_fa_start_gap_xs">
                         <div class="_group_content">
                             <?php
                                 ABPTF_Layout::button_sort();
-                                ABPTF_Layout::input_date('date_wise_date[' . $key . ']', ($date_time['date'] ?? ''));
+                                ABPTF_Layout::input_date($prefix . 'date_wise_date[' . $key . ']', ($date_time['date'] ?? ''));
                                 ABPTF_Layout::button_delete();
                             ?>
                         </div>
-                        <?php ABPTF_Layout::button_add_xs(__('Add Operation Time ', 'abp-transportforge')); ?>
+                        <?php ABPTF_Layout::button_add(__('Add Operation Time ', 'abp-transportforge')); ?>
                         <div class="insertable_area sortable_area _f_wrap_fa_gap_xs">
                             <?php if (!empty($times)) {
                                 foreach ($times as $time) {
                                     if (!empty($time)) {
-                                        $this->time_item('date_wise_time[' . $key . ']', $time);
+                                        $this->time_item($prefix . 'date_wise_time[' . $key . ']', $time);
                                     }
                                 }
                             } ?>
@@ -570,7 +630,7 @@
                     </div>
                     <div class="abp_hidden">
                         <div class="hidden_content">
-                            <?php $this->time_item('date_wise_time[]'); ?>
+                            <?php $this->time_item($prefix . 'date_wise_time[]'); ?>
                         </div>
                     </div>
                 </div>
